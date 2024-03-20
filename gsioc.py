@@ -37,11 +37,11 @@ class gsioc_Protocol:
     def create_logger(self):
         # Create a custom logger
         logger = logging.getLogger(__name__)
-        logging.basicConfig(filename="example.log", encoding="utf-8", level=logging.DEBUG)
+        logging.basicConfig(filename="logs/example.log", encoding="utf-8", level=logging.DEBUG)
 
         # Create handlers
         c_handler = logging.StreamHandler()
-        f_handler = logging.FileHandler('gsioc_protocol.log')
+        f_handler = logging.FileHandler('logs/gsioc_protocol.log')
         c_handler.setLevel(logging.DEBUG)
         f_handler.setLevel(logging.DEBUG)
 

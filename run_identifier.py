@@ -1,7 +1,7 @@
 
 import time
 
-NON_VOLATILE_MEMORY_FILE = 'non_volatile_memory.txt'
+NON_VOLATILE_MEMORY_FILE = 'logs/non_volatile_memory.txt'
 
 def __reset_non_volatile_memory():
     """

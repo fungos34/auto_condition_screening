@@ -52,13 +52,10 @@ class Rackcommands(): #returns a str() object command suitable for the liquid ha
     ############################# FUNDAMENTAL POSITIONAL COMMANDS #####################################
 
     def get_xy_command(self,vial_pos,tolerance='no'): #speed 125mm/s, force 100%
-        index_y,index_x=self.rack.get_vial_indices(vial_pos,self.rack_order,tolerance)#[0]
-        # index_y=self.rack.get_vial_indices(vial_pos,self.rack_order)[1]
-        # print(f'output of module "get_vial_indices()" is index_x: {index_x} and index_y {index_y}')
+        index_y,index_x=self.rack.get_vial_indices(vial_pos,self.rack_order,tolerance)
         if len(index_x)==len(index_y):
             command=[]
             for i in range(len(index_x)):
-                # print(f'index x: {index_x}, \n index y: {index_y}')
                 i_x=index_x[i]
                 i_y=index_y[i]
                 distance_x=self.rack.offset_x + self.rack.vial2vial_x * i_x + (self.rack_position-1)*self.rack_position_offset_x    
@@ -157,21 +154,13 @@ class Vial():
         self.vial_free_depth=vial_free_depth                #depth in mm
         self.sum_liquid_level = 0
 
-    # def update_liquid_level(self,add):
-    #     self.sum_liquid_level += add
-
-
-    # def set_fill_level(add):
-    #     filling_levels = {'level': }
-    #     self.sum_liquid_level = 
-
 def main():
     root_ctk = ctk.CTk()
     root_ctk.geometry("800x1225")
     root_ctk.title('Automation Enabled Electroorganic Synthesis in Flow')
     ctk.set_appearance_mode("dark")
 
-    start_button = ctk.CTkButton(master=root_ctk, text='Set Pumps Flow Rate', command=switch_pumps)
+    # start_button = ctk.CTkButton(master=root_ctk, text='Set Pumps Flow Rate', command=switch_pumps)
     homewaste_button = ctk.CTkButton(master=root_ctk, text='Go Home and Switch to Waste', command=go_home_and_switch_to_waste)
     deactivate_button = ctk.CTkButton(master=root_ctk, text='Deactivate Both Pumps', command=deactivate_both_pumps) 
     wastevial_button = ctk.CTkButton(master=root_ctk, text='Go to Waste Vial #1 and Switch Valve', command=go_to_waste_vial)
@@ -187,8 +176,6 @@ def main():
     button7 = ctk.CTkButton(master=root_ctk, text='Stop Pump B', command=stop_pump_b)
     
     
-
-    # quitsimul_button = ctk.CTkButton(master=root_ctk, text='Quit Simulation', command=kill_simulation)
     label = ctk.CTkLabel(master=root_ctk, text="This Graphical User Interface enables to control the \nSyrris Asia Pumps, \nGSIOC Liquid Handler, \nGSIOC Direct Injection Module and \nBKP Power Supply (future implementation) \nin a half automated manner.\nPress the Buttons to carry out the operations.\n('Set Pumps Flow Rate' is without function so far)", width=120, height=25)
     entry = ctk.CTkEntry(master=root_ctk, width=120, height=25)
     entry.place(relx=0.1, rely=1, anchor=ctk.NW)
@@ -200,9 +187,6 @@ def main():
         print(value)
         return value
     
-    # progressbar = ctk.CTkProgressBar(master=root_ctk, width=160, height=20, border_width=5)
-    # progressbar.place(relx=0.1, rely=0.5, anchor=ctk.NW)
-    # progressbar.set(slider_event(0.5))
 
     label.place(relx=0.5, rely=0.1, anchor=ctk.CENTER)
     button3.place(relx=0.5, rely=0.2, anchor=ctk.NW)
@@ -213,12 +197,11 @@ def main():
     quit_button.place(relx=0.5, rely=0.7, anchor=ctk.NW)
     button1.place(relx=0.1, rely=0.2, anchor=ctk.NW)
     deactivate_button.place(relx=0.1, rely=0.3, anchor=ctk.NW)
-    start_button.place(relx=0.1, rely=0.4, anchor=ctk.NW)
+    # start_button.place(relx=0.1, rely=0.4, anchor=ctk.NW)
     button4.place(relx=0.1, rely=0.5, anchor=ctk.NW)
     button5.place(relx=0.1, rely=0.6, anchor=ctk.NW)
     button6.place(relx=0.1, rely=0.7, anchor=ctk.NW)
     button7.place(relx=0.1, rely=0.8, anchor=ctk.NW)
-    # quitsimul_button.place(relx=0.1, rely=0.3, anchor=ctk.NW)
     root_ctk.mainloop() # Rest of the script won't execute until startButton pressed
 
 
@@ -409,18 +392,18 @@ def go_to_waste_vial(waste_vial_number: int = 1):
     g2.connect()
     g2.bCommand('VI')
 
-def switch_pumps(flowrate_a=0,flowrate_b=0):
-    sound.get_sound3()
-    min_flowrate = 10
-    if flowrate_a < min_flowrate:
-        flowrate_a = 0
-    else:
-        flowrate_a = format_flowrate([flowrate_a],2500)[0]
-    if flowrate_b < min_flowrate:
-        flowrate_b = 0
-    else:
-        flowrate_b = format_flowrate([flowrate_b],250)[0]
-    asyncio.run(config_pump(run_syrringe_pump.Level(1000,125,0)))
+# def switch_pumps(flowrate_a=0,flowrate_b=0):
+#     sound.get_sound3()
+#     min_flowrate = 10
+#     if flowrate_a < min_flowrate:
+#         flowrate_a = 0
+#     else:
+#         flowrate_a = format_flowrate([flowrate_a],2500)[0]
+#     if flowrate_b < min_flowrate:
+#         flowrate_b = 0
+#     else:
+#         flowrate_b = format_flowrate([flowrate_b],250)[0]
+#     asyncio.run(config_pump(run_syrringe_pump.Level(1000,125,0)))
 
 def deactivate_both_pumps():
     sound.get_sound3()

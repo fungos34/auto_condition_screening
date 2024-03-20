@@ -30,7 +30,7 @@ TESTING_ACTIVE = True
 PORT1   = 'COM3'    #port for GX-241 liquid handler - Ubuntu: '/dev/ttyUSB0'
 PORT2   = 'COM4'    #port for BK Precision 1739 - Ubuntu: '/dev/ttyUSB1'
 ##### Adapt this URL to the desired OPC-UA endpoint #####
-OPC_UA_SERVER_URL = "opc.tcp://127.0.0.1:36090/freeopcua/server/" # "opc.tcp://rcpeno02341:5000/"
+OPC_UA_SERVER_URL = "opc.tcp://127.0.0.1:36090/freeopcua/server/" # "opc.tcp://rcpeno02341:5000/" # OPC Server on new RCPE laptop # "opc.tcp://18-nf010:5000/" #OPC Server on FTIR Laptop # "opc.tcp://rcpeno00472:5000/" #OPC Server on RCPE Laptop
 #########################################################
 
 
@@ -79,15 +79,15 @@ if CHARGE_VALUES==[]:
 VOLTAGES = np.full(len(FLOW_B),(12)).tolist() #[6,6,6,6,6]        # (V) float or int
 ################## TESTS THE VARIABLES ###################
 
-print(f'currents: {CURRENTS}')
-print(f'voltages: {VOLTAGES}')
-print(f'flow A: {FLOW_A}')
-print(f'flow B: {FLOW_B}')
-print(f'charge values: {CHARGE_VALUES}')
-print(f'concentrations: {CONCENTRATIONS}')
-print(f'faraday constant: {FARADAY_CONST} (A*s/mol)')
-print(f'number of experiemnts: {len(CURRENTS)}')
-print(f'stady state factor: {STADY_STATE_RINSING_FACTOR}')
+# print(f'currents: {CURRENTS}')
+# print(f'voltages: {VOLTAGES}')
+# print(f'flow A: {FLOW_A}')
+# print(f'flow B: {FLOW_B}')
+# print(f'charge values: {CHARGE_VALUES}')
+# print(f'concentrations: {CONCENTRATIONS}')
+# print(f'faraday constant: {FARADAY_CONST} (A*s/mol)')
+# print(f'number of experiemnts: {len(CURRENTS)}')
+# print(f'stady state factor: {STADY_STATE_RINSING_FACTOR}')
 # sys.exit('please, delete this line to use the script')
 
 ###################### FORMAT INPUT ############################
@@ -186,6 +186,9 @@ def format_flowrate(flowrates_in: list, max_pump_flowrate: float | int ) -> list
 ####################### GENERATE A DOCUMENTATION TABLE ###################
 
 def get_run_id():
+    """Generates a unique ID.
+    :returns: string id of format LlPA-5969-urAY-9208
+    """
     id=[]
     for _ in range(4):
         id.append(random.choice(string.ascii_letters))
@@ -199,33 +202,37 @@ def get_run_id():
     for _ in range(4):
         id.append(str(random.choice(range(10))))
     run_id=''.join(id)
-    print(run_id)
     return run_id
-
 
 
 run_num = run_identifier.get_run_number()
 
-def get_documentation(id):
-    print(f'currents: {CURRENTS}\nvoltages: {VOLTAGES}\n dillutions b/a: {DILLUTION_BA}\ncharge values: {CHARGE_VALUES}\n concentrations: {CONCENTRATIONS}\nstady state factors: {STADY_STATE_RINSING_FACTOR}')
+
+def get_documentation(id: int) -> None:
+    """Writes out all experimental parameters for double checking and documentation into the log/ directory.
+    :param id: Int, the local run number.
+    :ouputs: Excel File with named like "233-documentation-LlPA-5969-urAY-9208", where the initial number is the local run number, the tailing code a unique identifier.
+    :prints: A formatted Table of all experimental parameters to the terminal.
+    """
+    # print(f'currents: {CURRENTS}\nvoltages: {VOLTAGES}\n dillutions b/a: {DILLUTION_BA}\ncharge values: {CHARGE_VALUES}\n concentrations: {CONCENTRATIONS}\nstady state factors: {STADY_STATE_RINSING_FACTOR}')
     df = pd.DataFrame({
         "Sample \nNumber": np.arange(start=1, stop=len(CURRENTS)+1,step=1).tolist(),
         "Currents \n(mA)": format_current(CURRENTS),
         "Voltages \n(V)": format_voltage(VOLTAGES),
-        "Flow Rate \nPump A \n(μL/min)": format_flowrate(FLOW_A,MAX_FLOWRATE_A),
-        "Flow Rate \nPump B \n(μL/min)": format_flowrate(FLOW_B,MAX_FLOWRATE_B),
+        "Flow \nRate \nPump A \n(μL/min)": format_flowrate(FLOW_A,MAX_FLOWRATE_A),
+        "Flow \nRate \nPump B \n(μL/min)": format_flowrate(FLOW_B,MAX_FLOWRATE_B),
         "Dillution \nB:A": DILLUTION_BA,
         "z-Values \n(F/mol)": CHARGE_VALUES,
         "Sample \nConcentration \n(mol/L)": CONCENTRATIONS,
-        "Stady state \nrinsing factor": STADY_STATE_RINSING_FACTOR
+        "Stady \nstate \nrinsing \nfactor": STADY_STATE_RINSING_FACTOR
     })
 
     groups=[]
     for i in range(len(CHARGE_VALUES)):
-        grouped = df.groupby("z-Values (F/mol)").get_group(CHARGE_VALUES[i])
+        grouped = df.groupby("z-Values \n(F/mol)").get_group(CHARGE_VALUES[i])
         groups.append(grouped)
     print(tabulate(df, headers='keys', tablefmt='psql'))
-    df.to_excel(f'{run_num}-documentation-{id}.xlsx')
+    df.to_excel(f'logs/{run_num}-documentation-{id}.xlsx')
     groups = pd.concat(groups)
 
     
@@ -235,6 +242,7 @@ RUN_ID = get_run_id()
 #############################################################################################
 
 class Rack():
+    """Representation for a Rack within the flow setup."""
     def __init__(self,array_dimensions,offset_x,offset_y,vial2vial_x,vial2vial_y,groundlevel_height):
         self.array_dimensions=array_dimensions
         self.offset_x=offset_x
@@ -243,12 +251,12 @@ class Rack():
         self.vial2vial_y=vial2vial_y
         self.groundlevel_height=groundlevel_height
         
-    #get indices of a specific vial in a rack with a certain order of the vials
-    #returns a tuple of (i,j) with i=vial-position along x-axis, and j=vial-position along y-axis
-    #improve: verify that input is valid in terms of type(), array dimensions and validation of the inputted values
-    #improve: implement error messages and logg messages
-    def get_vial_indices(self,vial_position,array_order,tolerance):
-        # print(str(f'array order is: {array_order}'))
+    
+    def get_vial_indices(self, vial_position, array_order, tolerance):
+        """get indices of a specific vial in a rack with a certain order of the vials
+        :returns: a tuple of (i,j) with i=vial-position along x-axis, and j=vial-position along y-axis
+        TODO: verify that input is valid type, array dimensions and validation of the inputted values
+        """
         indices=np.where(array_order==vial_position)
         # print(str(f'indices are: {indices}'))
         if len(indices)==2 and len(indices[0])==1:
@@ -258,13 +266,13 @@ class Rack():
             #REMOVE THIS STATEMENT!!!
             sys.exit(f'fatal error: zero vials with position number {vial_position}')                        #REMOVE THIS STATEMENT!!!
         else:
-            print(f'warning: multiple vials with position number {vial_position}')#\n len(indices): {len(indices)}\n len(indices[0]): {len(indices[0])}')
+            print(f'warning: multiple vials with position number {vial_position}')
             return indices
         
 #########################################################################################
-#########################################################################################
 
-class Rackcommands(): #returns a str() object command suitable for the liquid handler rx-241
+class Rackcommands(): 
+    """Representation for Commands connected to the Rack of the flow setup."""
     def __init__(self,rack,rack_order,rack_position,rack_position_offset_x=92,rack_position_offset_y=0):
         self.rack=rack
         self.rack_order=rack_order
@@ -274,7 +282,8 @@ class Rackcommands(): #returns a str() object command suitable for the liquid ha
         
     ############################# FUNDAMENTAL POSITIONAL COMMANDS #####################################
 
-    def get_xy_command(self,vial_pos,tolerance='no'): #speed 125mm/s, force 100%
+    def get_xy_command(self, vial_pos: int, tolerance: str = 'no') -> str: #speed 125mm/s, force 100%
+        """returns a str object command suitable for the liquid handler rx-241"""
         index_y,index_x=self.rack.get_vial_indices(vial_pos,self.rack_order,tolerance)
         if len(index_x)==len(index_y):
             command=[]
@@ -288,72 +297,11 @@ class Rackcommands(): #returns a str() object command suitable for the liquid ha
         else:
             print("error: len(index_x) != len(index_y) ")
 
-    def get_fly_command(self): #speed 125mm/s, force 100%
-        command=['Z125']
-        return command
-
-    def get_dive_command(self): #speed 125mm/s, force 100%
-        # print('starts diving')
-        command=['Z110:20:10']
-        return command
-
-    def get_suck_command(self):
-        # print('starts sucking it')
-        return ['Z95:10:10']
-
-    def get_swallow_command(self):
-        # print('stops sucking and starts swallowing it')
-        return ['Z110']
-
-        
-    ############################# COMBINED POSITIONAL COMMANDS ###################################
-
-    def get_defaultmode_commands(self,clean_each='no',tolerance='no'):
-        #if defaultmode is called it runs the positioning in the order of denotation in self.rack_order 
-        #if clean_each=='yes' it flushes after each position with blank solution, error if no blank solution is defined in self.rack_order
-        #if tolerance=='yes' missing vial numbers within the array are tolerated. multiple same vial numbers are choosen after each other.
-        print(f'gets commands for defaultmode...')
-        command_list=[]
-        ##### allows missing vial numbers ######
-        number_entries=0
-        for i in range(len(self.rack_order)):
-            for _ in range(len(self.rack_order[i])):
-                number_entries+=1
-        for i in range(number_entries):
-            print(f'number of entries is: {number_entries}, i={i}')
-            print(f'see what range(1,max(self.rack_order)) is outputting: {range(1,np.max(self.rack_order))}')
-            if (i+1) in range(1,np.max(self.rack_order)+1):
-                command_list.extend(self.get_fly_command())
-                print(f'this is causing problems: {i+1}')
-                for j in range(len(self.get_xy_command((i+1),tolerance))):
-                    command_list.append(self.get_xy_command(i+1,tolerance)[j])  # move to vial position i+1
-                    command_list.extend(self.get_dive_command())
-                    command_list.extend(self.get_suck_command())
-                    command_list.extend(self.get_swallow_command())
-                    command_list.extend(self.get_fly_command())
-                    if clean_each.lower()=='yes':                               # cleaning with blank solution
-                        command_list.extend(self.get_xy_command(0,tolerance))   # moves to blank position 0
-                        command_list.extend(self.get_dive_command())
-                        command_list.extend(self.get_suck_command())
-                        command_list.extend(self.get_swallow_command())
-                        command_list.extend(self.get_fly_command())
-        return command_list
-
-    def get_goto_command(self,vial_pos,tolerance='no'):
-        command=[]
-        command.extend(self.get_fly_command())
-        command.extend(self.get_xy_command(vial_pos,tolerance))
-        return command
-    
-    def get_safe_command(self):
-        command=[]
-        command.extend(self.get_fly_command())
-        command.extend(['H'])
-        return command
 
 #####################################################################################################
 
 class Vial():
+    """Representation for a Vial within the flow setup."""
     def __init__(self,vial_volume_max,vial_usedvolume_max,vial_height,vial_free_depth):
         self.vial_volume_max=vial_volume_max                #volume in mL
         self.vial_usedvolume_max=vial_usedvolume_max        #volume in mL
@@ -363,10 +311,21 @@ class Vial():
 
 #####################################################################################################
 
-class SetupVolumes(): #A1-B1-B2-AB1-AB2
-    def __init__(self,volume_valve_to_needle,volume_reactor_to_valve,volume_before_reactor,volume_reactor,volume_only_pump_a,volume_only_pump_b,volume_pump_a_and_pump_b,excess=1.5):     #volume in [uL], excess as %/100
+class SetupVolumes():
+    """Representation for all volumes within the flow setup to calculate the proper rinsing times."""
+    
+    def __init__(self, volume_valve_to_needle: float, volume_reactor_to_valve: float, volume_before_reactor: float, volume_reactor: float, volume_only_pump_a: float, volume_only_pump_b: float, volume_pump_a_and_pump_b: float, excess: float = 1.5):     
+        """Initializes the volumes for the flow setup to retrieve rinsing times.
+        :param volume_valve_to_needle: Volume (μL) including 6-port valve, tubings and liquid handler needle.
+        :param volume_reactor_to_valve: Volume (μL) including reactor, tubings before the 6-port valve.
+        :param volume_before_reactor: Volume (μL) including tubings before the reactor.
+        :param volume_reactor: Volume (μL) of the reactor.
+        :param volume_only_pump_a: Volume (μL) after the pump A, which is not influenced by another pump.
+        :param volume_only_pump_b: Volume (μL) after the pump B, which is not influenced by another pump.
+        :param volume_pump_a_and_pump_b: Volume (μL) after the pump A and B, which is influenced by both pumps.
+        :param excess: rinsing factor (as %/100) which the overall rinsing time is multiplied with to ensure proper rinsing."""
         self.volume_valve_to_needle=volume_valve_to_needle
-        self.volume_reactor_to_valve=volume_reactor_to_valve
+        # self.volume_reactor_to_valve=volume_reactor_to_valve
         self.volume_before_reactor=volume_before_reactor
         self.volume_reactor=volume_reactor
         self.excess=excess
@@ -375,73 +334,40 @@ class SetupVolumes(): #A1-B1-B2-AB1-AB2
         self.volume_pump_a_and_pump_b=volume_pump_a_and_pump_b
 
     def get_time_fill_needle(self,flowrate_a,flowrate_b,flowrate_sum):        #flow rate in [uL/min] #returns duration in [sec]
+        """returns time in sec to fill the needle at a certain flow rate."""
         duration=((self.volume_valve_to_needle/flowrate_sum)*(self.excess))*60
         return duration         #returns duration in [sec]
 
     def get_time_stady_state_rinsing(self,flowrate_a,flowrate_b,flowrate_sum,stady_state_rinsing_factor):         #flow rate in [uL/min] #returns duration in [sec]
+        """returns time in sec it takes to reach steady state at a certain flow rate."""
         duration=((((self.volume_reactor * stady_state_rinsing_factor)/flowrate_b)+(self.volume_pump_a_and_pump_b/flowrate_sum))*self.excess)*60
         return duration         #returns duration in [sec]
 
     def get_time_fill_reactor(self,flowrate_a,flowrate_b,flowrate_sum):
+        """returns time in sec to fill the reactor at a certain flow rate."""
         duration=(((self.volume_before_reactor + self.volume_reactor)/flowrate_b)*self.excess)*60
         return duration
 
 
     
-############################################# ADVANCED USER SETTINGS ###########################################
-
-### device parameter ###
+############################################ ADVANCED USER SETTINGS ###########################################
+                                            ### device parameter ###
 
 rack_position_offset_x=92       #distance in mm between rack_position=1 and =2 on x-axis
 rack_position_offset_y=0        #distance in mm between rack_position=1 and =2 on y-axis
 
-############################################# UNADVANCED USER SETTINGS #############################################
-
-def get_command_list():
-    
-    with open("array_order.csv") as csvfile:
-        read_in=csv.reader(csvfile)
-        line=0
-        array=list()
-        for row in read_in:
-            line+=1
-            if line==1:
-                rack_pos=int(row[1])
-            elif line==2:
-                rack_type=str(row[1])
-            else:
-                x=row
-                for i in range(len(x)):
-                    x[i]=int(x[i])
-                array.append(x)
-        array_order=np.array(array)
-
-    if rack_type=='a':
-        rack1=Rack([2,7],20,55,(28.55+2.17),(28.55+1.38),15.2) #distances in mm, CHECK IF X AND Y IS WELL DEFINED!!!
-    if rack_type=='b':
-        rack1=Rack([4,12],8.7,40,(2.11+15.6),(2.72+15.6+0.35),65)
-
-    ############### ASSIGNING THE CLASS TO A VARIABLE #################
-
-    rack1_command=Rackcommands(rack1,array_order,rack_pos,rack_position_offset_x,rack_position_offset_y) #the user has to define on which rack he wants to process a command!
-    
-    ########## EXAMPLE 1: INITIALIZING THE COMMAND LIST ###############
-
-    executable_rack1_command=[]
-
-    ########## EYAMPLE 2: APPENDING DEFAULT MODE COMMANDS #############
-
-    executable_rack1_command.extend(rack1_command.get_defaultmode_commands('no','no'))
-
-    ###########
-    print(f'the following list of commands is ready for sending to the device: {executable_rack1_command}')
-    return executable_rack1_command
-    
-position_workflow=get_command_list()
+###############################################################################################################
 
 # approach for error checking and collision avoidance:
 
-def expected_move_feedback(gsioc_class_object,commandclass_object,command):      #use only it the awaited response equals to the sent command. returns bool(True) if response equals command, returns bool(False) if not.
+def expected_move_feedback(gsioc_class_object, commandclass_object, command) -> bool:     
+    """Compares the command response with the command itself. Use only if the awaited response equals to the sent command.
+
+    :param gsioc_class_object: GSIOC Instance for logging.
+    :commandclass_object: Command Instance for comparison. 
+    :command: Sent command for comparison.
+    :returns: bool(True) if response equals command, returns bool(False) if not.
+    """
     gsioc_class_object.logger.debug(f'starting expected_move_feedback() with arguments: {commandclass_object}')
     response=(binascii.b2a_qp(commandclass_object)).decode('utf-8').strip()
     gsioc_class_object.logger.debug(f'converted arguments: {response}')
@@ -457,10 +383,9 @@ def expected_move_feedback(gsioc_class_object,commandclass_object,command):     
 
 
 async def config_pump(flowrate_levels=run_syrringe_pump.Level(0,0,0)):
+    """Configuration of the Syrris Asia pumps according to set flowrates."""
     # ----------- Defining url of OPCUA and flowRate levels -----------
-    # url = "opc.tcp://rcpeno00472:5000/" #OPC Server on RCPE Laptop
-    url = OPC_UA_SERVER_URL # "opc.tcp://rcpeno02341:5000/" # OPC Server on new RCPE laptop
-    # # url = "opc.tcp://18-nf010:5000/" #OPC Server on FTIR Laptop
+    url = OPC_UA_SERVER_URL 
     # # -----------------------------------------------------------------
     g.logger.info(f"OPC-UA Client: Connecting to {url} ...")
     async with run_syrringe_pump.Client(url=url) as client:
@@ -482,9 +407,9 @@ async def config_pump(flowrate_levels=run_syrringe_pump.Level(0,0,0)):
         await asyncio.sleep(flowrate_levels.time_in_seconds)
 
     
-async def deactivate_pump():
-    url = OPC_UA_SERVER_URL # "opc.tcp://rcpeno02341:5000/" # OPC Server on new RCPE laptop
-    # url = "opc.tcp://18-nf010:5000/" #OPC Server on FTIR Laptop
+async def deactivate_pump() -> None:
+    """Deactivation of both pumps."""
+    url = OPC_UA_SERVER_URL
     # -----------------------------------------------------------------
     g.logger.info(f"OPC-UA Client: Connecting to {url} ...")
     async with run_syrringe_pump.Client(url=url) as client:
@@ -493,9 +418,12 @@ async def deactivate_pump():
         pump13B = await run_syrringe_pump.Pump.create(client, "24196", "B")
         await asyncio.gather(pump13A.deactivate(), pump13B.deactivate())
 
-async def activate_pump(a=False,b=False):
-    url = OPC_UA_SERVER_URL # "opc.tcp://rcpeno02341:5000/" # OPC Server on new RCPE laptop
-    # url = "opc.tcp://18-nf010:5000/" #OPC Server on FTIR Laptop
+async def activate_pump(a: bool = False, b: bool = False) -> None:
+    """Activation of the pumps.
+    :param a: bool, pump A gets activated if True, else not.
+    :param b: bool, pump B gets activated if True, else not.
+    """
+    url = OPC_UA_SERVER_URL 
     # -----------------------------------------------------------------
     g.logger.info(f"OPC-UA Client: Connecting to {url} ...")
     async with run_syrringe_pump.Client(url=url) as client:
@@ -514,6 +442,10 @@ async def activate_pump(a=False,b=False):
 
 
 def dim_load(gsioc_protocol_object):
+    """Switches Direct Injection Module (DIM) to Load position. Queries the switching position for assuring success.
+    :expects: Global variable TESTING_ACTIVE.
+    :param gsioc_protocol_object: GSIOC Instance for commands to DIM.
+    """
     gsioc_protocol_object.connect()
     time.sleep(5)
     gsioc_protocol_object.bCommand('VL')
@@ -533,6 +465,10 @@ def dim_load(gsioc_protocol_object):
             return False
 
 def dim_inject(gsioc_protocol_object):
+    """Switches Direct Injection Module (DIM) to Inject position. Queries the switching position for assuring success.
+    :expects: Global variable TESTING_ACTIVE.
+    :param gsioc_protocol_object: GSIOC Instance for commands to DIM.
+    """
     gsioc_protocol_object.connect()
     time.sleep(5)
     gsioc_protocol_object.bCommand('VI')
@@ -553,41 +489,32 @@ def dim_inject(gsioc_protocol_object):
 
         
 class CustomThread(threading.Thread):
+    """Separate thread for querying BKPrecission Power Source parameters parallel to other operations."""
     def __init__(self, threadID, name, port):
+        """Thread initialisation."""
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
         self.port=port
 
     def run(self):
+        """Start up routine for BKP Power Source monitoring.
+        :expects: Global variable TESTING_ACTIVE.
+        """
         if TESTING_ACTIVE == True:
             a = monitor_BKP.get_commands('CURR?\r')
         else:
             a = monitor_BKP.get_commands('VOLT?\rCURR?\r')
         monitor_BKP.get_values(a,self.port,g.logger)
 
-# class BKPThread(threading.Thread):
-#     def __init__(self, threadID, name):
-#         threading.Thread.__init__(self)
-#         self.threadID = threadID
-#         self.name = name
-
-#     def run(self):
-#         print('bkp responder works')
-#         asyncio.run(bkp_responder.main())
-
-# class GSIOCThread(threading.Thread):
-#     def __init__(self, threadID, name):
-#         threading.Thread.__init__(self)
-#         self.threadID = threadID
-#         self.name = name
-
-#     def run(self):
-#         print('gsioc responder works')
-#         asyncio.run(gsioc_responder.main())
 
 
-def get_power_command(current='000.0',voltage='00.00'):
+def get_power_command(current='000.0', voltage='00.00') -> list:
+    """Generates a proper formatted command string for the BKPrecission Power Source.
+    :param current: String, Current porperly formatted with three leading digits and one digit after the comma: "000.0" 
+    :param voltage: String, Voltage porperly formatted with two leading digits and two digits after the comma: "00.00" 
+    :returns: List of properly formatted BKP commands.
+    """
     command1=str('CURR '+f'{current}'+'\r')
     command2=str('VOLT '+f'{voltage}'+'\r')
     if current=='000.0' and voltage=='00.00':
@@ -596,7 +523,12 @@ def get_power_command(current='000.0',voltage='00.00'):
         commands_list=[command2,'SAVE\r',command1,'SAVE\r','OUT ON\r']
     return commands_list
 
-async def set_power_supply(power_suppl,commands_list):
+async def set_power_supply(power_suppl, commands_list: list) -> bool:
+    """Sets the BKPrecission Power Source.
+    :param power_suppl: BKP instance for sending commands to.
+    :param commands_list: List, properly formatted commands for the BKP.  
+    :returns: True when finishing the action.
+    """
     for i in range(len(commands_list)):
         eol='\r'
         message=commands_list[i].encode('ascii')
@@ -612,7 +544,15 @@ async def set_power_supply(power_suppl,commands_list):
 
 ######################## WORKING ROUTINE ###############################################################################################################
 
-def get_prediction(flow_rates_a,flow_rates_b,plot:bool=True):
+def get_prediction(flow_rates_a: list, flow_rates_b: list, plot: bool = True) -> list:
+    """Retrieves predictions for the time it takes to finish an experiment at a certain flow rate. 
+    This prediciton is setup dependent and may be wrong when the underlying forumlas are nod adapted accordingly.
+
+    :param flow_rates_a: List of flow rates of pump A.
+    :param flow_rates_b: List of flow rates of pump B.
+    :param plot: Bool, plots the experiment duration when set to True.
+    :returns: List of predicted times.
+    """
     cummulated_flowrates=duration_caluclator.get_cummulated_flows(flow_rates_a,flow_rates_b)
     predicted_times=duration_caluclator.get_times(cummulated_flowrates)
     g.logger.debug(f'<<< predicted durations of the experiments (setup1 fitted curve model) in ascending order: {predicted_times} >>>')
@@ -620,7 +560,13 @@ def get_prediction(flow_rates_a,flow_rates_b,plot:bool=True):
         duration_caluclator.plot_time_func(cummulated_flowrates)
     return predicted_times
 
-def run_experiments(flow_rates_pump_a, flow_rates_pump_b,repeats,predicted_times):
+def run_experiments(flow_rates_pump_a: list, flow_rates_pump_b: list, repeats: int, predicted_times: list) -> None:
+    """Runs the whole experimental procedure, one experiment after another. Expects devices being set to an default initial state.
+    :param flow_rates_pump_a: List, experiment specific flow rates for pump A.
+    :param flow_rates_pump_b: List, experiment specific flow rates for pump B.
+    :param repeats: Int, number of repeats for the whole set of experiments.
+    :predicted_times: List, predicted times for each experiment.
+    :expects: Global variable (bool) SKIP_FILLING."""
     waste_vial_num = [5,5,5,5,5,4,4,4,4,4,3,3,3,3,3,2,2,2,2,2,1,1,1,1,1,5,5,5,5,5,4,4,4,4,4,3,3,3,3,3,2,2,2,2,2,1,1,1,1,1]
     beginning=time.time()
     g.bCommand('WBB')
@@ -639,7 +585,7 @@ def run_experiments(flow_rates_pump_a, flow_rates_pump_b,repeats,predicted_times
     else:
         a=False
         b=False
-    if fill_system(flow_rate_max_a,flow_rate_max_b,volumes_setup1,waste_vial_num[0],g,g2,a,b):
+    if fill_system(flow_rate_max_a, flow_rate_max_b, volumes_setup1, waste_vial_num[0], g, g2, a, b):
         monitoring_thread.start()
         for j in range(repeats):
             times=[]
@@ -654,7 +600,7 @@ def run_experiments(flow_rates_pump_a, flow_rates_pump_b,repeats,predicted_times
                 asyncio.run(set_power_supply(bkp_port,commands_list=['OUT OFF\r']))
                 if i+1 < CONDUCTION_FROM_EXP:
                     continue
-                if collect_rxn(flow_rates_pump_a[i],flow_rates_pump_b[i],volumes_setup1,int((j*len(flow_rates_pump_a))+i+1),waste_vial_num[i],vial_selfmade,vial_large,g,g2,currents[i],voltages[i],STADY_STATE_RINSING_FACTOR[i]):
+                if collect_rxn(flow_rates_pump_a[i], flow_rates_pump_b[i], volumes_setup1, int((j*len(flow_rates_pump_a))+i+1), waste_vial_num[i], vial_selfmade, vial_large, g, g2, currents[i], voltages[i], STADY_STATE_RINSING_FACTOR[i]):
                     end=time.time()
                     g.logger.debug(end-start)
                     if (i+1)<len(flow_rates_pump_a):
@@ -675,7 +621,12 @@ def run_experiments(flow_rates_pump_a, flow_rates_pump_b,repeats,predicted_times
 
 
 @error_handler(num=2) # this awesome decorator catches any error and restarts the whole experiment for num times.
-def collect_rxn(flow_rate_A,flow_rate_B,volumes_of_setup,collect_vial_number,waste_vial_number,vial_type_object,waste_vial_object,gsioc_liquidhandler,gsioc_directinjectionmodule,current_commands,voltage_commands,stadystaterinsingfactor):
+def collect_rxn(flow_rate_A: int, flow_rate_B: int, volumes_of_setup,collect_vial_number,waste_vial_number,vial_type_object,waste_vial_object,gsioc_liquidhandler,gsioc_directinjectionmodule,current_commands,voltage_commands,stadystaterinsingfactor):
+    """Conducts the repeated experimental procedure, which is to collect 1mL of reaction solution in the proper vial.
+    :param flow_rate_A: Int, flow rate (μL) of pump A for the current experiment.
+    :param flow_rate_B: Int, flow rate (μL) of pump B for the current experiment.
+    :param volumes_of_setup: Volumes for the current setup.
+    """
     flush_system_time=(volumes_of_setup.get_time_stady_state_rinsing(flow_rate_A,flow_rate_B,(flow_rate_A + flow_rate_B),stadystaterinsingfactor))#get_time_fill_next_rxn(flow_rate_B)#(flow_rate_A + flow_rate_B))
     collect_fraction_time=((vial_type_object.vial_usedvolume_max * 1000)/(flow_rate_A+flow_rate_B))*60
     if dim_load(gsioc_directinjectionmodule):
@@ -708,13 +659,13 @@ def collect_rxn(flow_rate_A,flow_rate_B,volumes_of_setup,collect_vial_number,was
                 g.logger.debug(f'<<< switching time ({end-start} sec) is longer than collecting time ({collect_fraction_time} sec) (fraction collection) >>>')
                 pass
     if dim_load(gsioc_directinjectionmodule):
-        with open('procedural_data.txt','r') as file:
+        with open('logs/procedural_data.txt','r') as file:
             lines = file.readlines()
             exp_finished = int(str(lines[1]).strip())
             addr = str(lines[3]).strip()
             entr = str(lines[4]).strip()
             g.logger.info(f'opened file "procedural_data.txt" successfully. value for finished experiments is {exp_finished}.')
-        with open('procedural_data.txt','w') as file:
+        with open('logs/procedural_data.txt','w') as file:
             file.write(str(os.getpid())+'\n'+str(exp_finished+1)+'\n'+str(len(CURRENTS))+'\n'+str(addr)+'\n'+str(entr))
             g.logger.info(f'wrote file "procedural_data.txt" successfully to finished experiments {str(exp_finished+1)}.')
         gsioc_liquidhandler.connect()
@@ -724,8 +675,19 @@ def collect_rxn(flow_rate_A,flow_rate_B,volumes_of_setup,collect_vial_number,was
         asyncio.run(set_power_supply(bkp_port,['OUT OFF\r']))
         return True
 
-def fill_system(flow_rate_A_max,flow_rate_B_max,volumes_of_setup,waste_vial_object,gsioc_liquidhandler,gsioc_directinjectionmodule,a=False,b=False):
-    """Fills the reactor and the tubing before with reaction mixture."""
+def fill_system(flow_rate_A_max: int, flow_rate_B_max: int, volumes_of_setup: SetupVolumes, waste_vial_object: int, gsioc_liquidhandler, gsioc_directinjectionmodule, a: bool = False, b: bool = False) -> bool:
+    """Fills the reactor and the tubing before the reactor with reaction mixture.
+    :param flow_rage_A_max: maximum flow rate pump A can take. Depends on global variable MAX_FLOWRATE_A.
+    :param flow_rage_B_max: maximum flow rate pump B can take. Depends on global variable MAX_FLOWRATE_B.
+    :param volumes_of_setup: Volumes of the current setup.
+    :param waste_vial_object: Int, position number of the waste vial.
+    :param gsioc_liquidhandler: GSIOC Liquid Handler instance for sending commands to.
+    :param gsioc_directinjectionmodule: GSIOC Direct Injection Module instance for sending commands to.
+    :param a: Bool, True if pump A is used.
+    :param b: Bool, True if pump B is used.
+    :expects: Global variable (bool) SKIP_FILLING.
+    :returns: True when finished system filling successfully.
+    """
     if SKIP_FILLING == True:
         return True
     if SKIP_FILLING == False:
@@ -744,56 +706,10 @@ def fill_system(flow_rate_A_max,flow_rate_B_max,volumes_of_setup,waste_vial_obje
     else:
         raise Exception(f'No desition made up for the filling procedure. Choose either "True" or "False". Current value: {SKIP_FILLING}')
 
-#############################################################################################
-####################################### GUI #################################################
-
-def gui_main():
-    root_ctk = ctk.CTk()
-    root_ctk.geometry("500x500")
-    root_ctk.title('automation') #'Automation Enabled Electroorganic Synthesis in Flow
-    ctk.set_appearance_mode("white")
-    start_button = ctk.CTkButton(master=root_ctk, text='Set Both Pumps to Flow Rate 0 uL/min', command=switch_pumps)
-    homewaste_button = ctk.CTkButton(master=root_ctk, text='Go', command=go_home_and_switch_to_waste)
-    start_button.place(relx=1, rely=1, anchor=ctk.SW)
-    homewaste_button.place(relx=0.5, rely=0.5, anchor=ctk.NW)
-    root_ctk.mainloop() # Rest of the script won't execute until startButton pressed
-
-def go_home_and_switch_to_waste():
-    sound.get_sound3()
-    g.connect()
-    g.bCommand('H')
-    g2.connect()
-    g2.bCommand('VL')
-
-def go_to_waste_vial(waste_vial_number: int = 1):
-    sound.get_sound3()
-    g.connect()
-    g.bCommand('H')
-    g.bCommand(rack4_commands.get_xy_command(waste_vial_number,'no')[0])
-    g.bCommand('Z100:20:20')
-    g2.connect()
-    g2.bCommand('VI')
-
-def switch_pumps(flowrate_a=0,flowrate_b=0):
-    sound.get_sound3()
-    min_flowrate = 10
-    if flowrate_a < min_flowrate:
-        flowrate_a = 0
-    else:
-        flowrate_a = format_flowrate([flowrate_a],2500)[0]
-    if flowrate_b < min_flowrate:
-        flowrate_b = 0
-    else:
-        flowrate_b = format_flowrate([flowrate_b],250)[0]
-    asyncio.run(config_pump(run_syrringe_pump.Level(1000,125,0)))
-
-def deactivate_both_pumps():
-    sound.get_sound3()
-    asyncio.run(deactivate_pump())
-
 
 ##############################################################################################
 def get_automation_setup():
+    """Sets up the flow setup specific parameters and initializes setup instances, ports and threads."""
     ########################################################################################################################################################
                     # SETTINGS
     ############################################### RACK 3 DEFINITION ####################################################
@@ -873,18 +789,28 @@ def get_automation_setup():
     monitoring_thread=CustomThread(1,'MonitorBKP',bkp_port)
     monitoring_thread.setDaemon(True)
 
-def start_watchdog():
+def start_watchdog() -> None:
+    """Runs the warden.py file for ensuring the main process is not killed arbitrary.
+    :expects: the overall process is started from the same directory as "warden.py". Tested only on WINDOWS OS, python has to be on PATH.
+    """
     os.system('python warden.py')
 
-def start_gui():
+def start_gui() -> None:
+    """Runs the GUI for basic commands towards the flow setup devices.
+    :expects: the overall process is started from the same directory as "basic_gui.py". Tested only on WINDOWS OS, python has to be on PATH.
+    """
     os.system('python basic_gui.py')
 
-def automation_main(remote: bool = False, conduction: int = 1):
+def automation_main(remote: bool = False, conduction: int = 1) -> None:
+    """Main entry point for the automated reactions condition screening. Sets setup devices to default initial state. 
+    :param remote: Bool, retrieves data from previous experiments when set to True and circumvents the CLI initialisation questions.
+    :param conduction: Int, the number of the experiment from which the process should start.
+    """
     get_automation_setup()
     if remote == False:
         my_addr = EMAIL_ADDRESS
         my_entrance = EMAIL_ENTRANCE
-        with open('procedural_data.txt','w') as file:
+        with open('logs/procedural_data.txt','w') as file:
             file.write(str(os.getpid())+'\n'+str(0)+'\n'+str(len(CURRENTS))+'\n'+str(my_addr)+'\n'+str(my_entrance))
             g.logger.info(f'wrote file "procedural_data.txt" successfully to finished experiments {str(0)}.')
         while True:
@@ -934,13 +860,13 @@ def automation_main(remote: bool = False, conduction: int = 1):
         else:
             raise Exception(f'Please choose an experiment out of 1 to {len(CURRENTS)}.')
     elif remote == True:
-        with open('procedural_data.txt','r') as file:
+        with open('logs/procedural_data.txt','r') as file:
             lines = file.readlines()
             exp_finished = int(str(lines[1]).strip())
             addr = str(lines[3]).strip()
             entr = str(lines[4]).strip()
             g.logger.info(f'opened file "procedural_data.txt" successfully. value for finished experiments is {exp_finished}.')
-        with open('procedural_data.txt','w') as file:
+        with open('logs/procedural_data.txt','w') as file:
             file.write(str(os.getpid())+'\n'+str(exp_finished)+'\n'+str(len(CURRENTS))+'\n'+str(addr)+'\n'+str(entr))
             g.logger.info(f'wrote file "procedural_data.txt" successfully to finished experiments {str(exp_finished+1)}.')
         allowance2 = 'y'
@@ -957,7 +883,7 @@ def automation_main(remote: bool = False, conduction: int = 1):
         g2.bCommand('VL')
         g.connect()
         g.bCommand('H')
-        run_experiments(format_flowrate(FLOW_A,MAX_FLOWRATE_A),format_flowrate(FLOW_B,MAX_FLOWRATE_B),1,get_prediction(FLOW_A,FLOW_B,plot=False))         # starts pumps and liquid handler and pumps 1mL to each defined Vial.
+        run_experiments(format_flowrate(FLOW_A,MAX_FLOWRATE_A), format_flowrate(FLOW_B,MAX_FLOWRATE_B), 1, get_prediction(FLOW_A,FLOW_B,plot=False))         # starts pumps and liquid handler and pumps 1mL to each defined Vial.
         proc.join()
         asyncio.run(set_power_supply(bkp_port,['OUT OFF\r']))
         asyncio.run(deactivate_pump())

@@ -34,7 +34,7 @@ def get_process_by_name_or_id(name: str = None, id: int = None):
 # print(os.getpid())
 
 def get_automation_process_state() -> str:
-    with open('procedural_data.txt','r') as file:
+    with open('logs/procedural_data.txt','r') as file:
         lines = file.readlines()
         process_id = str(lines[0]).strip()
         number_successfull_experiments = str(lines[1]).strip()
