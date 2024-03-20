@@ -2,7 +2,6 @@ import psutil
 import re
 import os
 import time
-from automated_platform.module.lab_equipment.active_components.gsioc.virtual_device import VirtualDevice, main
 import sys
 import asyncio
 from immortility_decorator import error_handler
