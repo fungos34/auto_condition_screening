@@ -3,7 +3,7 @@ from asyncua import Client, ua
 from loguru import logger
 import sys
 
-LOG_LEVEL = "INFO"
+# LOG_LEVEL = "INFO"
 
 def get_node(client, idx, name):
     nodeid = build_nodeid(idx, name)
@@ -129,63 +129,5 @@ class Pump(State):
             logger.debug(f"Coro _wait_for_value: current {current_value}, desired {desired_value}")
 
 
-
-
-# async def main():
-#     # ----------- Defining url of OPCUA and flowRate levels -----------
-#     # url = "opc.tcp://rcpeno00472:5000/" #OPC Server on RCPE Laptop
-#     url = "opc.tcp://rcpeno02341:5000/" # OPC Server on new RCPE laptop
-
-#     # url = "opc.tcp://18-nf010:5000/" #OPC Server on FTIR Laptop
-    
-#     # -----------------------------------------------------------------
-
-
-#     logger.info(f"OPC-UA Client: Connecting to {url} ...")
-#     async with Client(url=url) as client:
-#         # ------ Here you can define and operate all your pumps -------
-#         pump13A = await Pump.create(client, "24196", "A")
-#         pump13B = await Pump.create(client, "24196", "B")
-#         # await asyncio.gather(pump13A.activate(), pump13B.activate())
-        
-        
-#         flowrate_levels = (Level(310, 250, 5), # filling the system with reaction mixture
-#                            Level(310, 200, 5), # running the reaction 1
-#                            Level(310, 200, 5),) # collecting 1 mL
-#                         #    Level(620, 62, 88), # running the reaction 2
-#                         #    Level(620, 62, 10), # collecting for cleaning the tip
-#                         #    Level(620, 62, 97), # collecting 1 mL
-#                         #    Level(310, 31, 176), # running the reaction 3
-#                         #    Level(310, 31, 15), # collecting for cleaning the tip
-#                         #    Level(310, 31, 194), # collecting 1 mL
-#                         #    Level(500, 50, 110), # running the reaction 4
-#                         #    Level(500, 50, 10), # collecting for cleaning the tip
-#                         #    Level(500, 50, 120), # collecting 1 mL
-#                         #    Level(620, 62, 88), # running the reaction 5
-#                         #    Level(620, 62, 10), # collecting for cleaning the tip
-#                         #    Level(620, 62, 97), # collecting 1 mL
-#                         #    Level(1000, 0, 60), # cleaning the system, going to waste
-#                         #    Level(1000, 0, 10),) # collecting, cleaning the tip
-
-
-#         for flowrate_level in flowrate_levels:
-#             # await asyncio.sleep(10) # Add a delay (in seconds) before pumps start
-#             if  flowrate_level.flowrate_A == 0: 
-#                 await pump13A._call_method(pump13A.METHOD_STOP)
-#                 logger.info(f"{pump13A.name}: Pump stopped.")
-#             else: 
-#                 await pump13A.set_flowrate_to(flowrate_level.flowrate_A)
-            
-#             if flowrate_level.flowrate_B == 0: 
-#                 await pump13B._call_method(pump13B.METHOD_STOP)
-#                 logger.info(f"{pump13B.name}: Pump stopped.")
-#             else:
-#                 await pump13B.set_flowrate_to(flowrate_level.flowrate_B)
-#             await asyncio.sleep(flowrate_level.time_in_seconds)
-            
-#         await asyncio.gather(pump13A.deactivate(), pump13B.deactivate())
-      
-# if __name__ == "__main__":
-logger.remove()
-logger.add(sys.stderr, level=LOG_LEVEL)
-# asyncio.run(main())
+# logger.remove()
+# logger.add(sys.stderr, level=LOG_LEVEL)

@@ -2,13 +2,9 @@ import time
 import serial
 import numpy as np
 import sys
-import csv
-import regex as re
-import binascii
 import pandas as pd
 import random
 import string
-import customtkinter as ctk
 import os
 import asyncio
 from multiprocessing import Process
@@ -24,6 +20,7 @@ import run_identifier
 import monitor_BKP
 import sound
 
+from loguru import logger
 
 TESTING_ACTIVE = True
 ###### communication ######
@@ -33,11 +30,10 @@ PORT2   = 'COM4'    #port for BK Precision 1739 - Ubuntu: '/dev/ttyUSB1'
 OPC_UA_SERVER_URL = "opc.tcp://127.0.0.1:36090/freeopcua/server/" # "opc.tcp://rcpeno02341:5000/" # OPC Server on new RCPE laptop # "opc.tcp://18-nf010:5000/" #OPC Server on FTIR Laptop # "opc.tcp://rcpeno00472:5000/" #OPC Server on RCPE Laptop
 #########################################################
 
-
-###### experimental ######
 EMAIL_ADDRESS = 'automated_platform@gmx.at'
 EMAIL_ENTRANCE = 'AbC456DeF123' 
 
+###### experimental ######
 DILLUTION_BA = []#[20,20,20,20,15,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20]#['1:1','10:1','100:1','1000:1']  # 'parts of parts': "1:1" = 1 volume increment out of 1 volume increments is the reagent, or "10:1" = 1 volume increments of A out of 10 volume increments of A, or 9+1 volume increments.
 #[0,0,0,0]       # (uL/min)
 CURRENTS = [2.5,2.5,2.5,2.7,2.7,2.7,2.9,2.9,2.9,3.1,3.1,3.1,3.3,3.3,3.3,3.5,3.5,3.5,3.7,3.7,3.7,3.9,3.9,3.9,4.2,4.2,4.2,4.5,4.5,4.5,4.8,4.8,4.8,5.2,5.2,5.2,5.6,5.6,5.6,6,6,6]
@@ -77,18 +73,7 @@ if CHARGE_VALUES==[]:
         CHARGE_VALUES.append(int((CURRENTS[i] * 1000) / (CONCENTRATIONS[i] * FLOW_B[i] * (FARADAY_CONST/60)))) #formula units: (mL/min) = ((mA) * 1000) / ( (mol/L) * (1) * ( ((A*sec)/mol) / (sec)) ) )
 
 VOLTAGES = np.full(len(FLOW_B),(12)).tolist() #[6,6,6,6,6]        # (V) float or int
-################## TESTS THE VARIABLES ###################
 
-# print(f'currents: {CURRENTS}')
-# print(f'voltages: {VOLTAGES}')
-# print(f'flow A: {FLOW_A}')
-# print(f'flow B: {FLOW_B}')
-# print(f'charge values: {CHARGE_VALUES}')
-# print(f'concentrations: {CONCENTRATIONS}')
-# print(f'faraday constant: {FARADAY_CONST} (A*s/mol)')
-# print(f'number of experiemnts: {len(CURRENTS)}')
-# print(f'stady state factor: {STADY_STATE_RINSING_FACTOR}')
-# sys.exit('please, delete this line to use the script')
 
 ###################### FORMAT INPUT ############################
 
@@ -127,8 +112,7 @@ def format_voltage(voltages_in: list, max_voltage: float | int = 30) -> list:
     """
     formats an inputted list with numbers (float, int) and returns a formatted list with str() entries like: '02.00'
     prints out messages if the input is invalid and returns a NaN (Not a Number) in the output list.
-    """
-    
+    """    
     RANGE_VOLTAGE = [0, max_voltage] # settable current values specific for BK Precision 1739 (30V / 1A)
     voltages_out=[]
 
@@ -273,6 +257,7 @@ class Rack():
 
 class Rackcommands(): 
     """Representation for Commands connected to the Rack of the flow setup."""
+
     def __init__(self,rack,rack_order,rack_position,rack_position_offset_x=92,rack_position_offset_y=0):
         self.rack=rack
         self.rack_order=rack_order
@@ -316,6 +301,7 @@ class SetupVolumes():
     
     def __init__(self, volume_valve_to_needle: float, volume_reactor_to_valve: float, volume_before_reactor: float, volume_reactor: float, volume_only_pump_a: float, volume_only_pump_b: float, volume_pump_a_and_pump_b: float, excess: float = 1.5):     
         """Initializes the volumes for the flow setup to retrieve rinsing times.
+
         :param volume_valve_to_needle: Volume (μL) including 6-port valve, tubings and liquid handler needle.
         :param volume_reactor_to_valve: Volume (μL) including reactor, tubings before the 6-port valve.
         :param volume_before_reactor: Volume (μL) including tubings before the reactor.
@@ -358,36 +344,13 @@ rack_position_offset_y=0        #distance in mm between rack_position=1 and =2 o
 
 ###############################################################################################################
 
-# approach for error checking and collision avoidance:
-
-def expected_move_feedback(gsioc_class_object, commandclass_object, command) -> bool:     
-    """Compares the command response with the command itself. Use only if the awaited response equals to the sent command.
-
-    :param gsioc_class_object: GSIOC Instance for logging.
-    :commandclass_object: Command Instance for comparison. 
-    :command: Sent command for comparison.
-    :returns: bool(True) if response equals command, returns bool(False) if not.
-    """
-    gsioc_class_object.logger.debug(f'starting expected_move_feedback() with arguments: {commandclass_object}')
-    response=(binascii.b2a_qp(commandclass_object)).decode('utf-8').strip()
-    gsioc_class_object.logger.debug(f'converted arguments: {response}')
-    gsioc_class_object.logger.debug(f'unconverted command: {command}')
-    catch=re.search(response,command)
-
-    if catch:
-        gsioc_class_object.logger.debug('response euqals command: ready for the next command!')
-        return True
-    else:
-        gsioc_class_object.logger.debug('response does not equal command: process cancelled!')
-        return False
-
 
 async def config_pump(flowrate_levels=run_syrringe_pump.Level(0,0,0)):
     """Configuration of the Syrris Asia pumps according to set flowrates."""
     # ----------- Defining url of OPCUA and flowRate levels -----------
     url = OPC_UA_SERVER_URL 
     # # -----------------------------------------------------------------
-    g.logger.info(f"OPC-UA Client: Connecting to {url} ...")
+    logger.info(f"OPC-UA Client: Connecting to {url} ...")
     async with run_syrringe_pump.Client(url=url) as client:
         # ------ Here you can define and operate all your pumps -------
         pump13A = await run_syrringe_pump.Pump.create(client, "24196", "A")
@@ -395,13 +358,13 @@ async def config_pump(flowrate_levels=run_syrringe_pump.Level(0,0,0)):
         
         if  flowrate_levels.flowrate_A == 0: 
             await pump13A._call_method(pump13A.METHOD_STOP)
-            g.logger.info(f"{pump13A.name}: Pump stopped.")
+            logger.info(f"{pump13A.name}: Pump stopped.")
         else: 
             await pump13A.set_flowrate_to(flowrate_levels.flowrate_A)
 
         if flowrate_levels.flowrate_B == 0: 
             await pump13B._call_method(pump13B.METHOD_STOP)
-            g.logger.info(f"{pump13B.name}: Pump stopped.")
+            logger.info(f"{pump13B.name}: Pump stopped.")
         else:
             await pump13B.set_flowrate_to(flowrate_levels.flowrate_B)
         await asyncio.sleep(flowrate_levels.time_in_seconds)
@@ -411,21 +374,23 @@ async def deactivate_pump() -> None:
     """Deactivation of both pumps."""
     url = OPC_UA_SERVER_URL
     # -----------------------------------------------------------------
-    g.logger.info(f"OPC-UA Client: Connecting to {url} ...")
+    logger.info(f"OPC-UA Client: Connecting to {url} ...")
     async with run_syrringe_pump.Client(url=url) as client:
         # ------ Here you can define and operate all your pumps -------
         pump13A = await run_syrringe_pump.Pump.create(client, "24196", "A")
         pump13B = await run_syrringe_pump.Pump.create(client, "24196", "B")
         await asyncio.gather(pump13A.deactivate(), pump13B.deactivate())
 
+
 async def activate_pump(a: bool = False, b: bool = False) -> None:
     """Activation of the pumps.
+
     :param a: bool, pump A gets activated if True, else not.
     :param b: bool, pump B gets activated if True, else not.
     """
     url = OPC_UA_SERVER_URL 
     # -----------------------------------------------------------------
-    g.logger.info(f"OPC-UA Client: Connecting to {url} ...")
+    logger.info(f"OPC-UA Client: Connecting to {url} ...")
     async with run_syrringe_pump.Client(url=url) as client:
         # ------ Here you can define and operate all your pumps -------
         pump13A = await run_syrringe_pump.Pump.create(client, "24196", "A")
@@ -443,6 +408,7 @@ async def activate_pump(a: bool = False, b: bool = False) -> None:
 
 def dim_load(gsioc_protocol_object):
     """Switches Direct Injection Module (DIM) to Load position. Queries the switching position for assuring success.
+
     :expects: Global variable TESTING_ACTIVE.
     :param gsioc_protocol_object: GSIOC Instance for commands to DIM.
     """
@@ -461,11 +427,13 @@ def dim_load(gsioc_protocol_object):
             return True
         else:
             error=gsioc_protocol_object.iCommand('e')
-            gsioc_protocol_object.logger.debug(f'the direct injection module returned the following error: {error}')
+            logger.debug(f'the direct injection module returned the following error: {error}')
             return False
+
 
 def dim_inject(gsioc_protocol_object):
     """Switches Direct Injection Module (DIM) to Inject position. Queries the switching position for assuring success.
+
     :expects: Global variable TESTING_ACTIVE.
     :param gsioc_protocol_object: GSIOC Instance for commands to DIM.
     """
@@ -484,12 +452,13 @@ def dim_inject(gsioc_protocol_object):
             return True
         else:
             error=gsioc_protocol_object.iCommand('e')
-            gsioc_protocol_object.logger.debug(f'the direct injection module returned the following error: {error}')
+            logger.debug(f'the direct injection module returned the following error: {error}')
             return False
 
         
 class CustomThread(threading.Thread):
     """Separate thread for querying BKPrecission Power Source parameters parallel to other operations."""
+
     def __init__(self, threadID, name, port):
         """Thread initialisation."""
         threading.Thread.__init__(self)
@@ -505,12 +474,13 @@ class CustomThread(threading.Thread):
             a = monitor_BKP.get_commands('CURR?\r')
         else:
             a = monitor_BKP.get_commands('VOLT?\rCURR?\r')
-        monitor_BKP.get_values(a,self.port,g.logger)
+        monitor_BKP.get_values(a,self.port,logger)
 
 
 
 def get_power_command(current='000.0', voltage='00.00') -> list:
     """Generates a proper formatted command string for the BKPrecission Power Source.
+
     :param current: String, Current porperly formatted with three leading digits and one digit after the comma: "000.0" 
     :param voltage: String, Voltage porperly formatted with two leading digits and two digits after the comma: "00.00" 
     :returns: List of properly formatted BKP commands.
@@ -523,8 +493,10 @@ def get_power_command(current='000.0', voltage='00.00') -> list:
         commands_list=[command2,'SAVE\r',command1,'SAVE\r','OUT ON\r']
     return commands_list
 
+
 async def set_power_supply(power_suppl, commands_list: list) -> bool:
     """Sets the BKPrecission Power Source.
+
     :param power_suppl: BKP instance for sending commands to.
     :param commands_list: List, properly formatted commands for the BKP.  
     :returns: True when finishing the action.
@@ -536,11 +508,12 @@ async def set_power_supply(power_suppl, commands_list: list) -> bool:
         reply=power_suppl.read_until(expected=eol)
         if reply:
             reply.decode('ascii')
-            g.logger.debug(f'command: {commands_list[i]}, reply: {reply}')
+            logger.info(f'command: {commands_list[i]}, reply: {reply}')
         else:
-            g.logger.debug(f'command: {commands_list[i]}, but no reply.')
+            logger.info(f'command: {commands_list[i]}, but no reply.')
         time.sleep(3)
     return True
+
 
 ######################## WORKING ROUTINE ###############################################################################################################
 
@@ -555,13 +528,15 @@ def get_prediction(flow_rates_a: list, flow_rates_b: list, plot: bool = True) ->
     """
     cummulated_flowrates=duration_caluclator.get_cummulated_flows(flow_rates_a,flow_rates_b)
     predicted_times=duration_caluclator.get_times(cummulated_flowrates)
-    g.logger.debug(f'<<< predicted durations of the experiments (setup1 fitted curve model) in ascending order: {predicted_times} >>>')
+    logger.info(f'<<< predicted durations of the experiments (setup1 fitted curve model) in ascending order: {predicted_times} >>>')
     if plot:
         duration_caluclator.plot_time_func(cummulated_flowrates)
     return predicted_times
 
+
 def run_experiments(flow_rates_pump_a: list, flow_rates_pump_b: list, repeats: int, predicted_times: list) -> None:
     """Runs the whole experimental procedure, one experiment after another. Expects devices being set to an default initial state.
+    
     :param flow_rates_pump_a: List, experiment specific flow rates for pump A.
     :param flow_rates_pump_b: List, experiment specific flow rates for pump B.
     :param repeats: Int, number of repeats for the whole set of experiments.
@@ -571,7 +546,7 @@ def run_experiments(flow_rates_pump_a: list, flow_rates_pump_b: list, repeats: i
     beginning=time.time()
     g.bCommand('WBB')
     asyncio.run(set_power_supply(bkp_port,commands_list=['OUT OFF\r']))
-    g.logger.debug(f'<<< starting with the actual process: at {beginning} >>>')
+    logger.info(f'<<< starting with the actual process: at {beginning} >>>')
     if SKIP_FILLING == False:
         if sum(flow_rates_pump_a)!=0:
             a=True
@@ -585,14 +560,14 @@ def run_experiments(flow_rates_pump_a: list, flow_rates_pump_b: list, repeats: i
     else:
         a=False
         b=False
-    if fill_system(flow_rate_max_a, flow_rate_max_b, volumes_setup1, waste_vial_num[0], g, g2, a, b):
+    if fill_system(MAX_FLOWRATE_A, MAX_FLOWRATE_B, volumes_setup1, waste_vial_num[0], g, g2, a, b):
         monitoring_thread.start()
         for j in range(repeats):
             times=[]
             time_diff=[]
             start=time.time()
-            g.logger.debug(start-beginning)
-            g.logger.debug(f'<<< going on with experiment 1 (flowrates: {flow_rates_pump_a[0],flow_rates_pump_b[0]} uL/min) after {start-beginning} sec >>>')
+            logger.debug(start-beginning)
+            logger.info(f'<<< going on with experiment 1 (flowrates: {flow_rates_pump_a[0],flow_rates_pump_b[0]} uL/min) after {start-beginning} sec >>>')
             for i in range(len(flow_rates_pump_a)):
                 if i+1 <= 99:
                     g.connect()
@@ -602,43 +577,55 @@ def run_experiments(flow_rates_pump_a: list, flow_rates_pump_b: list, repeats: i
                     continue
                 if collect_rxn(flow_rates_pump_a[i], flow_rates_pump_b[i], volumes_setup1, int((j*len(flow_rates_pump_a))+i+1), waste_vial_num[i], vial_selfmade, vial_large, g, g2, currents[i], voltages[i], STADY_STATE_RINSING_FACTOR[i]):
                     end=time.time()
-                    g.logger.debug(end-start)
+                    logger.debug(end-start)
                     if (i+1)<len(flow_rates_pump_a):
-                        g.logger.debug(f'<<< going on with experiment {i+2} (flowrates: {flow_rates_pump_a[i+1],flow_rates_pump_b[i+1]} uL/min) after another {end-start} sec >>>')
+                        logger.info(f'<<< going on with experiment {i+2} (flowrates: {flow_rates_pump_a[i+1],flow_rates_pump_b[i+1]} uL/min) after another {end-start} sec >>>')
                     times.append(end-start)
                     time_diff.append((end-start)-predicted_times[i])
-                    g.logger.debug(f'current times list: {times} (sec)')
+                    logger.info(f'current times list: {times} (sec)')
                     start=time.time()
                 if i+1 <= 99:
                     g.connect()
                     g.bCommand(f'WBB')
             end=time.time()
-            g.logger.debug(end-start)
-            g.logger.debug(f'<<< finished all {len(flow_rates_pump_a)} experiments after another {end-start} sec >>>')
-            g.logger.debug(f'<<< predicted times: {predicted_times} (sec); meassured times: {times} (sec); time differences: {time_diff} >>>')
+            logger.debug(end-start)
+            logger.info(f'<<< finished all {len(flow_rates_pump_a)} experiments after another {end-start} sec >>>')
+            logger.info(f'<<< predicted times: {predicted_times} (sec); meassured times: {times} (sec); time differences: {time_diff} >>>')
     asyncio.run(set_power_supply(bkp_port,commands_list=['OUT OFF\r']))
     asyncio.run(deactivate_pump())
 
 
 @error_handler(num=2) # this awesome decorator catches any error and restarts the whole experiment for num times.
-def collect_rxn(flow_rate_A: int, flow_rate_B: int, volumes_of_setup,collect_vial_number,waste_vial_number,vial_type_object,waste_vial_object,gsioc_liquidhandler,gsioc_directinjectionmodule,current_commands,voltage_commands,stadystaterinsingfactor):
-    """Conducts the repeated experimental procedure, which is to collect 1mL of reaction solution in the proper vial.
+def collect_rxn(flow_rate_A: int, flow_rate_B: int, volumes_of_setup: SetupVolumes, collect_vial_number: int, waste_vial_number: int, vial_type_object: Vial, waste_vial_object: Vial, gsioc_liquidhandler: gsioc_Protocol, gsioc_directinjectionmodule: gsioc_Protocol, current_commands: list, voltage_commands: list, stadystaterinsingfactor: float) -> bool:
+    """Conducts the repeated experimental procedure, which is by default to collect 1mL of reaction solution in the proper vial.
+    
     :param flow_rate_A: Int, flow rate (μL) of pump A for the current experiment.
     :param flow_rate_B: Int, flow rate (μL) of pump B for the current experiment.
-    :param volumes_of_setup: Volumes for the current setup.
+    :param volumes_of_setup: Volumes instance of the current setup.
+    :param collect_vial_number: Int, position number of the vial where the reaction mixture will be collected. 
+    :param waste_vial_number: Int, position number of the vial where the waste will be collected. 
+    :param vial_type_object: Vial instance of the collecting vial with according dimensions.
+    :param waste_vial_object: Vial instance of the waste vial with according dimensions.
+    :param gsioc_liquidhandler: GSIOC Liquid handler instance for sending commands.
+    :param gsioc_directinjectionmodule: GSIOC Direct Injection Module instance for sending commands.
+    :param current_commands: List, containing float values for the current to apply in each experiment (in mA).
+    :param voltage_commands: List, containing float values for the maximum voltage (in constant current mode) to apply during each experiment (in V).
+    :param stadystaterinsingfactor: Float, the rinsing of the reactor under experimental conditions will be conducted for the regular residence time of the reactor times this stadystaterinsingfactor.
+
+    :returns: True if finished experiment successfully.
     """
     flush_system_time=(volumes_of_setup.get_time_stady_state_rinsing(flow_rate_A,flow_rate_B,(flow_rate_A + flow_rate_B),stadystaterinsingfactor))#get_time_fill_next_rxn(flow_rate_B)#(flow_rate_A + flow_rate_B))
     collect_fraction_time=((vial_type_object.vial_usedvolume_max * 1000)/(flow_rate_A+flow_rate_B))*60
     if dim_load(gsioc_directinjectionmodule):
-        gsioc_liquidhandler.logger.debug('<<< Experiment is starting right now >>>')
-        asyncio.run(config_pump(run_syrringe_pump.Level(0,flow_rate_max_b,0)))        # starting the reaction: dont stop the pumps anymore
+        logger.info('<<< Experiment is starting right now >>>')
+        asyncio.run(config_pump(run_syrringe_pump.Level(0,MAX_FLOWRATE_B,0)))        # starting the reaction: dont stop the pumps anymore
         time.sleep(15)
-        #time.sleep(volumes_of_setup.get_time_rinse_reactor(flow_rate_max_b)) # flush it without rxn
+        #time.sleep(volumes_of_setup.get_time_rinse_reactor(MAX_FLOWRATE_B)) # flush it without rxn
         asyncio.run(config_pump(run_syrringe_pump.Level(flow_rate_A,flow_rate_B,0)))
         runtime_start=time.time()
         if asyncio.run(set_power_supply(bkp_port,get_power_command(current=current_commands,voltage=voltage_commands))):
             time.sleep(5)
-            ensure_xy_position_will_be_reached(gsioc_liqhan=gsioc_liquidhandler,attempts=2,logging_entity=g.logger,xy_positioning_command=rack4_commands.get_xy_command(waste_vial_number,'no')[0], TESTING_ACTIVE=TESTING_ACTIVE)
+            ensure_xy_position_will_be_reached(gsioc_liqhan=gsioc_liquidhandler,attempts=2,logging_entity=logger,xy_positioning_command=rack4_commands.get_xy_command(waste_vial_number,'no')[0], TESTING_ACTIVE=TESTING_ACTIVE)
             gsioc_liquidhandler.bCommand('Z100:20:20')  # improve this
             if dim_inject(gsioc_directinjectionmodule):
                 runtime_end=time.time()
@@ -647,16 +634,16 @@ def collect_rxn(flow_rate_A: int, flow_rate_B: int, volumes_of_setup,collect_via
                 else:
                     time.sleep(volumes_of_setup.get_time_fill_needle(flow_rate_A,flow_rate_B,(flow_rate_A + flow_rate_B)))
     if dim_load(gsioc_directinjectionmodule):
-        ensure_xy_position_will_be_reached(gsioc_liqhan=gsioc_liquidhandler,attempts=2,logging_entity=g.logger,xy_positioning_command=rack3_commands.get_xy_command(collect_vial_number,'no')[0], TESTING_ACTIVE=TESTING_ACTIVE)
+        ensure_xy_position_will_be_reached(gsioc_liqhan=gsioc_liquidhandler,attempts=2,logging_entity=logger,xy_positioning_command=rack3_commands.get_xy_command(collect_vial_number,'no')[0], TESTING_ACTIVE=TESTING_ACTIVE)
         gsioc_liquidhandler.bCommand('Z100:20:20')  # improve this
         start=time.time()
         if dim_inject(gsioc_directinjectionmodule):
             end=time.time()
             if ((collect_fraction_time)-(end-start))>0:
-                gsioc_liquidhandler.logger.debug(f'<<< collecting {(((flow_rate_A+flow_rate_B)*(collect_fraction_time/60))/1000)} [mL] >>>')
+                logger.info(f'<<< collecting {(((flow_rate_A+flow_rate_B)*(collect_fraction_time/60))/1000)} [mL] >>>')
                 time.sleep(collect_fraction_time-(end-start))
             else:
-                g.logger.debug(f'<<< switching time ({end-start} sec) is longer than collecting time ({collect_fraction_time} sec) (fraction collection) >>>')
+                logger.debug(f'<<< switching time ({end-start} sec) is longer than collecting time ({collect_fraction_time} sec) (fraction collection) >>>')
                 pass
     if dim_load(gsioc_directinjectionmodule):
         with open('logs/procedural_data.txt','r') as file:
@@ -664,10 +651,10 @@ def collect_rxn(flow_rate_A: int, flow_rate_B: int, volumes_of_setup,collect_via
             exp_finished = int(str(lines[1]).strip())
             addr = str(lines[3]).strip()
             entr = str(lines[4]).strip()
-            g.logger.info(f'opened file "procedural_data.txt" successfully. value for finished experiments is {exp_finished}.')
+            logger.debug(f'opened file "procedural_data.txt" successfully. value for finished experiments is {exp_finished}.')
         with open('logs/procedural_data.txt','w') as file:
             file.write(str(os.getpid())+'\n'+str(exp_finished+1)+'\n'+str(len(CURRENTS))+'\n'+str(addr)+'\n'+str(entr))
-            g.logger.info(f'wrote file "procedural_data.txt" successfully to finished experiments {str(exp_finished+1)}.')
+            logger.info(f'wrote file "procedural_data.txt" successfully to finished experiments {str(exp_finished+1)}.')
         gsioc_liquidhandler.connect()
         time.sleep(5)
         gsioc_liquidhandler.bCommand('Z125')
@@ -692,7 +679,7 @@ def fill_system(flow_rate_A_max: int, flow_rate_B_max: int, volumes_of_setup: Se
         return True
     if SKIP_FILLING == False:
         fill_system_time=volumes_of_setup.get_time_fill_reactor(flow_rate_A_max,flow_rate_B_max,(flow_rate_A_max + flow_rate_B_max))
-        ensure_xy_position_will_be_reached(gsioc_liqhan=gsioc_liquidhandler,attempts=2,logging_entity=g.logger,xy_positioning_command=rack4_commands.get_xy_command(waste_vial_object,'no')[0], TESTING_ACTIVE=TESTING_ACTIVE)
+        ensure_xy_position_will_be_reached(gsioc_liqhan=gsioc_liquidhandler,attempts=2,logging_entity=logger,xy_positioning_command=rack4_commands.get_xy_command(waste_vial_object,'no')[0], TESTING_ACTIVE=TESTING_ACTIVE)
         gsioc_liquidhandler.bCommand('Z100:20:20')
         if dim_inject(gsioc_directinjectionmodule):
             if a==False:
@@ -765,10 +752,6 @@ def get_automation_setup():
     ############################################### EXPERIMENTAL SETUP ####################################################
     global volumes_setup1
     volumes_setup1=SetupVolumes(460,73,50,17,170,50,520,1.1)
-    global flow_rate_max_a
-    flow_rate_max_a=MAX_FLOWRATE_A
-    global flow_rate_max_b
-    flow_rate_max_b=MAX_FLOWRATE_B
     #######################################################################################################################
     ####################################### MONITORE VIAL LOAD ############################################################
     global vial_load_rack3
@@ -784,7 +767,7 @@ def get_automation_setup():
 
     ####### SETTINGS FOR BK PRECISION DEVICE ######
     global bkp_port
-    bkp_port=monitor_BKP.get_port(g.logger,PORT2)
+    bkp_port=monitor_BKP.get_port(logger,PORT2)
     global monitoring_thread
     monitoring_thread=CustomThread(1,'MonitorBKP',bkp_port)
     monitoring_thread.setDaemon(True)
@@ -801,6 +784,7 @@ def start_gui() -> None:
     """
     os.system('python basic_gui.py')
 
+
 def automation_main(remote: bool = False, conduction: int = 1) -> None:
     """Main entry point for the automated reactions condition screening. Sets setup devices to default initial state. 
     :param remote: Bool, retrieves data from previous experiments when set to True and circumvents the CLI initialisation questions.
@@ -808,11 +792,9 @@ def automation_main(remote: bool = False, conduction: int = 1) -> None:
     """
     get_automation_setup()
     if remote == False:
-        my_addr = EMAIL_ADDRESS
-        my_entrance = EMAIL_ENTRANCE
         with open('logs/procedural_data.txt','w') as file:
-            file.write(str(os.getpid())+'\n'+str(0)+'\n'+str(len(CURRENTS))+'\n'+str(my_addr)+'\n'+str(my_entrance))
-            g.logger.info(f'wrote file "procedural_data.txt" successfully to finished experiments {str(0)}.')
+            file.write(str(os.getpid())+'\n'+str(0)+'\n'+str(len(CURRENTS)))
+            logger.info(f'wrote file "procedural_data.txt" successfully to finished experiments {str(0)}.')
         while True:
             allowance1 = input('starting position change? (y/n): ')
             if allowance1.lower() == 'y':
@@ -839,7 +821,7 @@ def automation_main(remote: bool = False, conduction: int = 1) -> None:
                 conducting_experiments = int(input('from which experiment number do you want to start? (integer number) '))
                 break
             except BaseException as e:
-                g.logger.critical(f'The following error occured:\n{e}\nPlease Note: Enter only integer numbers for probe number.')
+                logger.error(f'The following error occured:\n{e}\nPlease Note: Enter only integer numbers for probe number.')
                 continue
         if 1 <= conducting_experiments <= len(CURRENTS):
             global CONDUCTION_FROM_EXP 
@@ -849,11 +831,11 @@ def automation_main(remote: bool = False, conduction: int = 1) -> None:
                 if filling_procedure.lower() == 'n':
                     global SKIP_FILLING
                     SKIP_FILLING = True
-                    g.logger.info('Filling procedure is going to be skipped.')
+                    logger.info('Filling procedure is going to be skipped.')
                     break
                 elif filling_procedure.lower() == 'y':
                     SKIP_FILLING = False
-                    g.logger.info('Filling procedure is going to be carried out.')
+                    logger.info('Filling procedure is going to be carried out.')
                     break
                 else:
                     continue
@@ -865,10 +847,10 @@ def automation_main(remote: bool = False, conduction: int = 1) -> None:
             exp_finished = int(str(lines[1]).strip())
             addr = str(lines[3]).strip()
             entr = str(lines[4]).strip()
-            g.logger.info(f'opened file "procedural_data.txt" successfully. value for finished experiments is {exp_finished}.')
+            logger.info(f'opened file "procedural_data.txt" successfully. value for finished experiments is {exp_finished}.')
         with open('logs/procedural_data.txt','w') as file:
             file.write(str(os.getpid())+'\n'+str(exp_finished)+'\n'+str(len(CURRENTS))+'\n'+str(addr)+'\n'+str(entr))
-            g.logger.info(f'wrote file "procedural_data.txt" successfully to finished experiments {str(exp_finished+1)}.')
+            logger.info(f'wrote file "procedural_data.txt" successfully to finished experiments {str(exp_finished+1)}.')
         allowance2 = 'y'
         CONDUCTION_FROM_EXP = conduction
         SKIP_FILLING = True
@@ -878,24 +860,27 @@ def automation_main(remote: bool = False, conduction: int = 1) -> None:
         sound.get_sound1()
         get_documentation(RUN_ID)
         run_identifier.set_run_number()
-        g.logger.debug(f'run ID: {RUN_ID}')
+        logger.info(f'run ID: {RUN_ID}')
         g2.connect()
         g2.bCommand('VL')
         g.connect()
         g.bCommand('H')
-        run_experiments(format_flowrate(FLOW_A,MAX_FLOWRATE_A), format_flowrate(FLOW_B,MAX_FLOWRATE_B), 1, get_prediction(FLOW_A,FLOW_B,plot=False))         # starts pumps and liquid handler and pumps 1mL to each defined Vial.
+        run_experiments(format_flowrate(FLOW_A,MAX_FLOWRATE_A), format_flowrate(FLOW_B,MAX_FLOWRATE_B), 1, get_prediction(FLOW_A,FLOW_B,plot=True))         # starts pumps and liquid handler and pumps 1mL to each defined Vial.
         proc.join()
         asyncio.run(set_power_supply(bkp_port,['OUT OFF\r']))
         asyncio.run(deactivate_pump())
-        g.logger.debug(f'run ID: {RUN_ID}')
+        logger.debug(f'run ID: {RUN_ID}')
         sound.get_sound2()
-        # Genauigkeit 1mL abfüllen bei 2500uL/min
-        # 3.5641g-2.5774g=0.9867g
-        # Genauigkeit 1mL abfüllen bei 2000uL/min
-        # 3.5684-2.5755g=0.9929g
-        # normwert bei r.t. und Normaldruck: 0.997g
-        # accuracy = 0.992778335005015
+
+
+# Genauigkeit 1mL abfüllen bei 2500uL/min
+# 3.5641g-2.5774g=0.9867g
+# Genauigkeit 1mL abfüllen bei 2000uL/min
+# 3.5684-2.5755g=0.9929g
+# normwert bei r.t. und Normaldruck: 0.997g
+# accuracy = 0.992778335005015
 
 ##################################################################################
 if __name__ == '__main__':
+    logger.add(sink="logs/combined_logs.log", level='INFO', format='<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>')
     automation_main()

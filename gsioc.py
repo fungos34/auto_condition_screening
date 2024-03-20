@@ -6,10 +6,8 @@ import binascii
 import logging
 import regex as re
 from math import isclose
-import numpy as np
-import random
-import sys
-from loguru import logger as lg
+
+from loguru import logger
 
 class gsioc_Protocol:
 
@@ -32,12 +30,11 @@ class gsioc_Protocol:
         self.ID = ID
         self.connection_repeats = 30
         
-        self.logger = self.create_logger()
+        # logger = self.create_logger()
         
     def create_logger(self):
         # Create a custom logger
         logger = logging.getLogger(__name__)
-        logging.basicConfig(filename="logs/example.log", encoding="utf-8", level=logging.DEBUG)
 
         # Create handlers
         c_handler = logging.StreamHandler()
@@ -60,12 +57,12 @@ class gsioc_Protocol:
 
     # Checks if SerialPort is open; If not opens it
     def verify_open(self):
-        self.logger.debug('Check if port is open.')
+        logger.debug('Check if port is open.')
         if self.serial.isOpen() == False:
             try:
                 self.serial.open()
             except Exception as e:
-                self.logger.exception('Port is not opening.')
+                logger.exception('Port is not opening.')
                 raise e
 
         return True
@@ -100,10 +97,10 @@ class gsioc_Protocol:
 
         resp = self.serial.read(10)    # Will return empty array after timeout
         if(len(resp) == 0) or resp == b'':
-            self.logger.critical('No response from device')
+            logger.critical('No response from device')
             if self.connection_repeats > 0:
                 self.connection_repeats = (self.connection_repeats - 1)
-                self.logger.error(f'Attempt {30-self.connection_repeats}/30: {str(datetime.datetime.now())} No response from device {byte_ID-128}')
+                logger.error(f'Attempt {30-self.connection_repeats}/30: {str(datetime.datetime.now())} No response from device {byte_ID-128}')
                 self.connect()
             else:
                 raise Exception(str(datetime.datetime.now()) + "No response from device")
@@ -111,22 +108,22 @@ class gsioc_Protocol:
         # Verifies that the correct device is connected
         if self.verify_device():
             
-            self.logger.debug(f"Connected to device {byte_ID-128}")
+            logger.debug(f"Connected to device {byte_ID-128}")
         # Wrong Device ID
         else:
-            self.logger.error(f'Connected to wrong device: connecting to device {byte_ID-128} failed.')
+            logger.error(f'Connected to wrong device: connecting to device {byte_ID-128} failed.')
             if self.connection_repeats > 0:
                 self.connection_repeats = (self.connection_repeats - 1)
-                self.logger.error(f'Attempt {30-self.connection_repeats}/30: Tried connecting to device: {byte_ID-128}')
+                logger.error(f'Attempt {30-self.connection_repeats}/30: Tried connecting to device: {byte_ID-128}')
                 self.connect()
             else:
-                self.logger.error('Connected to wrong device: {}'.format(self.iCommand('%')))
+                logger.error('Connected to wrong device: {}'.format(self.iCommand('%')))
                 raise Exception('Connected to wrong device: {}'.format(self.iCommand('%')))
 
     # Send immediate Command; One Character at most
     def iCommand(self,commandstring):
         
-        self.logger.debug(f'Sending immediate command {commandstring} to device.')
+        logger.debug(f'Sending immediate command {commandstring} to device.')
         
         # Convert to binary
         command = binascii.a2b_qp(commandstring)
@@ -143,10 +140,10 @@ class gsioc_Protocol:
             if(len(resp_raw) == 0) or resp_raw == b'':
                 if self.connection_repeats > 0:
                     self.connection_repeats = (self.connection_repeats - 1)
-                    self.logger.error(f'Attempt {30-self.connection_repeats}/30: sent Immediate Command {commandstring}, in binascii: {command}')
+                    logger.error(f'Attempt {30-self.connection_repeats}/30: sent Immediate Command {commandstring}, in binascii: {command}')
                     self.iCommand(commandstring)
                 else:
-                    self.logger.critical('No response from device')
+                    logger.critical('No response from device')
                     raise Exception(str(datetime.datetime.now()) + "No response from device")
 
             resp.append(resp_raw[0])
@@ -155,7 +152,7 @@ class gsioc_Protocol:
             if(resp[len(resp)-1] > 127):
                 resp[len(resp)-1] -= 128
 
-                self.logger.debug(f'Sending immediate command complete.')
+                logger.debug(f'Sending immediate command complete.')
                 break
 
             # Write Acknowledge to Device to signal next byte can be retrieved
@@ -163,19 +160,19 @@ class gsioc_Protocol:
                 self.serial.flushInput()
                 self.serial.write(bytes.fromhex("06"))
                 
-        self.logger.debug('Received {} as response'.format(resp.decode("ascii")))
+        logger.debug('Received {} as response'.format(resp.decode("ascii")))
 
         return resp.decode("ascii")
 
     # Buffered Command; More then one character
     def bCommand(self,commandstring):
         
-        self.logger.debug(f'Sending buffered command "{commandstring}" to device.')
+        logger.debug(f'Sending buffered command "{commandstring}" to device.')
 
         # Convert to byte, \n signifies start of command, \r signals end of command
         data = binascii.a2b_qp("\n" + commandstring + "\r")
-        #self.logger.debug(len(data)) #J.F.W.>>> see if the data binary is composed of suitable bytes
-        print(f'GSIOC <<< {commandstring}')
+        #logger.debug(len(data)) #J.F.W.>>> see if the data binary is composed of suitable bytes
+        logger.info(f'GSIOC <<< {commandstring}')
         self.serial.flushInput()
         resp = bytearray(0)
 
@@ -189,12 +186,12 @@ class gsioc_Protocol:
             if(len(resp_raw) == 0) or resp_raw == b'':
                 if self.connection_repeats > 0:
                     self.connection_repeats = (self.connection_repeats - 1)
-                    self.logger.error(f'Attempt {30-self.connection_repeats}/30: sent Bmmediate Command {commandstring}, in binascii: {data}')
+                    logger.error(f'Attempt {30-self.connection_repeats}/30: sent Bmmediate Command {commandstring}, in binascii: {data}')
                     self.bCommand(commandstring)
                 else:
-                    self.logger.critical('No response from device')
+                    logger.critical('No response from device')
                     raise Exception(str(datetime.datetime.now()) + "No response from device")
-            print(f'ready signal: {resp_raw}')
+            logger.debug(f'ready signal: {resp_raw}')
             ################################################################################################################
             # TODO CHECK IF THE FOLLOWING CONIDTION RAISES MORE PROBLEMS!!! IT IS MEANT TO FIX THE INDEX OUT OF RANGE ERROR!
             if not resp_raw:
@@ -203,49 +200,49 @@ class gsioc_Protocol:
             readySig = resp_raw[0]
             # If devices answers \n signifies device is ready
             if(readySig == 10): #J.F.W.>>> 10 is ascii code for Line Feed LF
-                self.logger.debug('Starting to send buffered command.')
+                logger.debug('Starting to send buffered command.')
                 break
 
             # Device is busy
             elif(readySig == 35): #J.F.W>>> 35 is ascii code for "#"-symbol
                 if(not firstErrorPrinted):
-                    self.logger.debug('Device busy. Waiting....')
+                    logger.debug('Device busy. Waiting....')
                     firstErrorPrinted = True
             else:
-                self.logger.error("Did not recieve \\n (0x0A) or # as response")
+                logger.error("Did not recieve \\n (0x0A) or # as response")
                 # raise Exception("Did not recieve \\n (0x0A) or # as response")
-        self.logger.debug(readySig)#.decode("ascii")) #JFW>>>
+        logger.debug(readySig)#.decode("ascii")) #JFW>>>
         resp.append(readySig)
         self.serial.flushInput()
         # Send buffered data, one byte at a time, Device echo's byte send
         for i in range(1,len(data)):
-            self.logger.debug(f'Writes buffered Command character {data[i:i+1]} to the device {self.device_name}.')
+            logger.debug(f'Writes buffered Command character {data[i:i+1]} to the device {self.device_name}.')
             self.serial.write(data[i:i+1])
-            self.logger.debug(f'Starts reading character from the device {self.device_name}.')
+            logger.debug(f'Starts reading character from the device {self.device_name}.')
             resp_raw = self.serial.read(3)    # Will return empty array after timeout
-            self.logger.debug(f'got back {resp_raw} from the device {self.device_name}.')
+            logger.debug(f'got back {resp_raw} from the device {self.device_name}.')
         # for i in range(len(data)):
         #     self.serial.write(data[i:i+1])
         #     resp_raw = self.serial.read(3) 
-            self.logger.debug("resp_raw: "+str(resp_raw)) #JFW>>>
+            logger.debug("resp_raw: "+str(resp_raw)) #JFW>>>
 
             # self.serial.flushInput()
             if(len(resp_raw) == 0) or resp_raw == b'':
                 if self.connection_repeats > 0:
                     self.connection_repeats = (self.connection_repeats - 1)
-                    self.logger.error(f'Attempt {30-self.connection_repeats}/30: sent Bmmediate Command {commandstring}, in binascii: {data}')
+                    logger.error(f'Attempt {30-self.connection_repeats}/30: sent Bmmediate Command {commandstring}, in binascii: {data}')
                     self.bCommand(commandstring)
                 else:
-                    self.logger.critical('No response from device')
+                    logger.critical('No response from device')
                     raise Exception(str(datetime.datetime.now()) + "No response from device")
-                # self.logger.debug(resp_raw) #JFW>>>
+                # logger.debug(resp_raw) #JFW>>>
 
-            # self.logger.debug("resp_raw: "+str(resp_raw))
+            # logger.debug("resp_raw: "+str(resp_raw))
             
             if len(resp_raw)==3:
                 resp.append(resp_raw[1])
             else:
-                self.logger.debug(f'resp_raw 2: {resp_raw[0]}')
+                logger.debug(f'resp_raw 2: {resp_raw[0]}')
                 resp.append(resp_raw[0])
 
             # resp=binascii.a2b_qp(resp)
@@ -254,20 +251,20 @@ class gsioc_Protocol:
            
 
             if( resp[i] != data[i] ):
-                self.logger.debug("Response:" + str(resp[:])) #JFW>>>
-                self.logger.debug("Data:" + str(data[:])) #JFW>>>
-                self.logger.error('Received ' + str(resp) + " instead of " + str(data[i:i+1]))
+                logger.debug("Response:" + str(resp[:])) #JFW>>>
+                logger.debug("Data:" + str(data[:])) #JFW>>>
+                logger.error('Received ' + str(resp) + " instead of " + str(data[i:i+1]))
                 # raise Exception("Received " + str(resp) + " instead of " + str(data[i:i+1]))
             
             if( resp[i] == 13 ):
-                self.logger.debug('Buffered command complete.')
-                self.logger.debug(f'Received {resp} from device.')    
-                print(f'GSIOC >>> {resp}')
+                logger.debug('Buffered command complete.')
+                logger.debug(f'Received {resp} from device.')    
+                logger.info(f'GSIOC >>> {resp}')
                 return resp
             
 
         # This will happen if sending the data failed
-        self.logger.error("Buffered command FAILED")
+        logger.error("Buffered command FAILED")
         resp_no_whitespace = resp[1:len(resp)-2]
         return resp_no_whitespace.decode("ascii")
 
@@ -293,7 +290,6 @@ def check_xy_position_change(gsioc_lh, logging_entity, destination_command, TEST
     Returns True if position is the expected one, False if not."""
     logging_entity.info(f'The following command is checked: {destination_command}')
     match =  re.search('^X(\d+\.?(\d+)?)/(\d+\.?(\d+)?)$',destination_command)
-    print(match)
     if match:
         gsioc_lh.connect()
         current_xy_position = str(gsioc_lh.iCommand('X'))
@@ -324,7 +320,6 @@ def ensure_xy_position_will_be_reached(gsioc_liqhan,attempts,logging_entity,xy_p
     # gsioc_liqhan.bCommand('H')
     gsioc_liqhan.bCommand('Z125')
     for i in range(attempts):
-        print('############################### CHECKPOINT X.1')
         gsioc_liqhan.bCommand(xy_positioning_command)
         approval = check_xy_position_change(gsioc_liqhan,logging_entity,xy_positioning_command, TESTING_ACTIVE)
         if i > 0:

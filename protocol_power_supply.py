@@ -1,13 +1,9 @@
 import asyncio
 from loguru import logger
-import warnings
 import serial_asyncio
 import sys
 import time
-import binascii
 import numpy as np
-from logging_decorator import logging_handler
-import threading
 
 # functions/classes needed to be exported
 __all__ = ()

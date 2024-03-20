@@ -313,7 +313,7 @@ async def deactivate_pump():
     url = OPC_UA_SERVER_URL # "opc.tcp://rcpeno02341:5000/" # OPC Server on new RCPE laptop
     # url = "opc.tcp://18-nf010:5000/" #OPC Server on FTIR Laptop
     # -----------------------------------------------------------------
-    g.logger.info(f"OPC-UA Client: Connecting to {url} ...")
+    logger.info(f"OPC-UA Client: Connecting to {url} ...")
     async with run_syrringe_pump.Client(url=url) as client:
         # ------ Here you can define and operate all your pumps -------
         pump13A = await run_syrringe_pump.Pump.create(client, "24196", "A")
@@ -325,7 +325,7 @@ async def activate_pump(a=False,b=False):
     url = OPC_UA_SERVER_URL # "opc.tcp://rcpeno02341:5000/" # OPC Server on new RCPE laptop
     # url = "opc.tcp://18-nf010:5000/" #OPC Server on FTIR Laptop
     # -----------------------------------------------------------------
-    g.logger.info(f"OPC-UA Client: Connecting to {url} ...")
+    logger.info(f"OPC-UA Client: Connecting to {url} ...")
     async with run_syrringe_pump.Client(url=url) as client:
         # ------ Here you can define and operate all your pumps -------
         pump13A = await run_syrringe_pump.Pump.create(client, "24196", "A")

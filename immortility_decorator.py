@@ -1,6 +1,5 @@
 from loguru import logger
 import random
-import numpy as np
 
 def error_handler(num: int = 1, parrent_exception = BaseException):
     """
