@@ -1,0 +1,4 @@
+2024-03-20 22:11:35.714 | INFO     | __main__:restarter:49 - Process priority of warden process was set to 128.
+2024-03-20 22:12:05.715 | INFO     | __main__:restarter:63 - warden process ID: 1996
+2024-03-20 22:12:05.715 | INFO     | __main__:restarter:64 - watched process ID: 21128 - successfull experiments: 0 - overall experiments: 42
+2024-03-20 22:12:06.216 | INFO     | __main__:restarter:65 - [psutil.Process(pid=21128, name='python3.10.exe', status='running', started='22:11:27')]

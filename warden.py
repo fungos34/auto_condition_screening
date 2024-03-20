@@ -2,11 +2,11 @@ import psutil
 import re
 import os
 import time
-import sys
-import asyncio
 from immortility_decorator import error_handler
 from run import automation_main
+
 from loguru import logger
+logger.add('logs/watchdog.log', level='INFO')
 
 """
 Niklas nikl.sulz3@gmail.com
@@ -55,8 +55,6 @@ def restarter():
         exps_before = int(exps)
         pid, exps, overall_exps, err = get_automation_process_state()
         exps_after = int(exps)
-        # print(email_addr)
-        # print(email_entr)
         if exps_before < exps_after:
             try:
                 logger.critical(f'Experiments: {exps}, Errors: {err}')
@@ -82,44 +80,4 @@ def restarter():
 if __name__ == '__main__':
     restarter()
 
-
-# import os
-
-# print(os.getpid())
-# print(os.getlogin())
-# print(type(os.getpid()))
-# import psutil
-
-# processes = [p.cmdline() for p in psutil.process_iter() ]#if p.name().lower() in ['python.exe'] ]#and 'warden.py' not in p.cmdline()[1]]
-
-# print(processes)
-# while True:
-#     p = next(psutil.process_iter())
-#     p = p.cmdline()
-#     print(p)
-
-# import serial
-
-# from os import getpid
-# from sys import argv, exit
-# import psutil  ## pip install psutil
-
-# myname = argv[0]
-# mypid = getpid()
-# for process in psutil.process_iter():
-#     if process.pid != mypid:
-#         for path in process.cmdline():
-#             if myname in path:
-#                 print("process found")
-#                 process.terminate()
-                # exit()
-
-# ser=serial.Serial('COM3',19200,8,"N",1,0.1) 
-
-# i=0
-# while True:
-#     i+=1
-#     transfered = ser.read(10)
-#     print(transfered)
-#     print(f'run {i}')
 

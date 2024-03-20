@@ -5,8 +5,9 @@ import time
 import sys
 import asyncio
 
-
 from loguru import logger
+logger.add('logs/monitoring.log', level='INFO', filter="monitor_BKP")
+
 ###################################################################################
 ############################## USER SETTINGS ######################################
 ###################################################################################
@@ -65,39 +66,6 @@ def get_commands(commands):
     return commands_list
 
 ###################################################################################
-########################### GENERATES A LOG FILE ##################################
-
-# def get_logger(lvl=logging.DEBUG):
-#     """! Generates and configures the Log files.
-
-#     @param level object for specifying the logging Niveau. Default is logging.DEBUG
-#     @return A logger object
-#     """
-#     # Create a custom logger
-#     logger = logging.getLogger('BKprecision')
-#     logging.basicConfig(encoding="utf-8", level=lvl)
-
-#     # Create handlers
-#     f_handler = logging.FileHandler('BKprecision_protocol.log')
-#     f_handler.setLevel(logging.CRITICAL)
-
-#     detail_handler=logging.FileHandler('BKprecision_details.log')
-#     detail_handler.setLevel(logging.DEBUG)
-
-#     # Create formatters and add it to handlers
-#     f_format = logging.Formatter()
-#     f_handler.setFormatter(f_format)
-
-#     detail_format=logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-#     detail_handler.setFormatter(detail_format)
-
-#     # Add handlers to the logger
-#     logger.addHandler(f_handler)
-#     logger.addHandler(detail_handler)
-
-#     return logger
-
-###################################################################################
 ############### QUERY DEVICE RESPONSES IN FOUR SEC INTEVAL ########################
 
 def get_values(commands_list,port,logger):
@@ -149,11 +117,6 @@ def get_values(commands_list,port,logger):
 ################################### RUN SCRIPT ####################################
 
 if __name__=='__main__':
-    # logger=get_logger(logging.DEBUG)
-    # async def main():
-    #    a=await get_commands(COMMANDS)
-    #    await get_values(a,get_port(logger,PORT),logger)
-    # asyncio.run(main())
     asyncio.run(get_values(get_commands(COMMANDS),get_port(logger,PORT),logger))
 
 ###################################### END ########################################

@@ -28,7 +28,7 @@ class gsioc_Protocol:
         self.serial = serial
         self.device_name = device_name
         self.ID = ID
-        self.connection_repeats = 30
+        self.connection_repeats = 100
         
         # logger = self.create_logger()
         
@@ -100,7 +100,7 @@ class gsioc_Protocol:
             logger.critical('No response from device')
             if self.connection_repeats > 0:
                 self.connection_repeats = (self.connection_repeats - 1)
-                logger.error(f'Attempt {30-self.connection_repeats}/30: {str(datetime.datetime.now())} No response from device {byte_ID-128}')
+                logger.error(f'Attempt {100-self.connection_repeats}/100: {str(datetime.datetime.now())} No response from device {byte_ID-128}')
                 self.connect()
             else:
                 raise Exception(str(datetime.datetime.now()) + "No response from device")
@@ -114,7 +114,7 @@ class gsioc_Protocol:
             logger.error(f'Connected to wrong device: connecting to device {byte_ID-128} failed.')
             if self.connection_repeats > 0:
                 self.connection_repeats = (self.connection_repeats - 1)
-                logger.error(f'Attempt {30-self.connection_repeats}/30: Tried connecting to device: {byte_ID-128}')
+                logger.error(f'Attempt {100-self.connection_repeats}/100: Tried connecting to device: {byte_ID-128}')
                 self.connect()
             else:
                 logger.error('Connected to wrong device: {}'.format(self.iCommand('%')))
@@ -140,7 +140,7 @@ class gsioc_Protocol:
             if(len(resp_raw) == 0) or resp_raw == b'':
                 if self.connection_repeats > 0:
                     self.connection_repeats = (self.connection_repeats - 1)
-                    logger.error(f'Attempt {30-self.connection_repeats}/30: sent Immediate Command {commandstring}, in binascii: {command}')
+                    logger.error(f'Attempt {100-self.connection_repeats}/100: sent Immediate Command {commandstring}, in binascii: {command}')
                     self.iCommand(commandstring)
                 else:
                     logger.critical('No response from device')
@@ -160,7 +160,8 @@ class gsioc_Protocol:
                 self.serial.flushInput()
                 self.serial.write(bytes.fromhex("06"))
                 
-        logger.debug('Received {} as response'.format(resp.decode("ascii")))
+        # logger.debug('Received {} as response'.format(resp.decode("ascii")))
+        logger.debug(f'received {resp} as response.')
 
         return resp.decode("ascii")
 
@@ -186,7 +187,7 @@ class gsioc_Protocol:
             if(len(resp_raw) == 0) or resp_raw == b'':
                 if self.connection_repeats > 0:
                     self.connection_repeats = (self.connection_repeats - 1)
-                    logger.error(f'Attempt {30-self.connection_repeats}/30: sent Bmmediate Command {commandstring}, in binascii: {data}')
+                    logger.error(f'Attempt {100-self.connection_repeats}/100: sent buffered Command {commandstring}, in binascii: {data}')
                     self.bCommand(commandstring)
                 else:
                     logger.critical('No response from device')
@@ -230,7 +231,7 @@ class gsioc_Protocol:
             if(len(resp_raw) == 0) or resp_raw == b'':
                 if self.connection_repeats > 0:
                     self.connection_repeats = (self.connection_repeats - 1)
-                    logger.error(f'Attempt {30-self.connection_repeats}/30: sent Bmmediate Command {commandstring}, in binascii: {data}')
+                    logger.error(f'Attempt {100-self.connection_repeats}/100: sent buffered Command {commandstring}, in binascii: {data}')
                     self.bCommand(commandstring)
                 else:
                     logger.critical('No response from device')

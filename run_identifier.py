@@ -1,5 +1,4 @@
-
-import time
+from loguru import logger
 
 NON_VOLATILE_MEMORY_FILE = 'logs/non_volatile_memory.txt'
 
@@ -9,7 +8,7 @@ def __reset_non_volatile_memory():
     """
     with open(f'{NON_VOLATILE_MEMORY_FILE}','w') as file:
         file.write('1')
-        print(f'SUCCESSFULLY RESET NON VOLATILE MEMORY.')
+        logger.critical(f'SUCCESSFULLY RESET NON VOLATILE MEMORY.')
 
 def set_run_number():
     """
@@ -21,7 +20,7 @@ def set_run_number():
         run_number = int(line)
     with open(f'{NON_VOLATILE_MEMORY_FILE}','w') as file:
         file.write(str(run_number+1))
-        print(f"writing run number: {run_number + 1}")
+        logger.info(f"writing run number: {run_number + 1}")
 
 def get_run_number():
     """
@@ -33,7 +32,7 @@ def get_run_number():
         lines = file.readlines()
         line = lines[0]
         run_number = line
-        print(f'This is run number {run_number}.')
+        logger.info(f'This is run number {run_number}.')
         return int(run_number)
 
 if __name__ == '__main__':

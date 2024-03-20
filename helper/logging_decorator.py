@@ -1,15 +1,10 @@
 from loguru import logger
 import serial
 import time
-import sys
 import inspect
 import asyncio
 import functools
-# sys.path.append('C:\\Users\\rcpe\\Desktop\\Masterarbeit_AutomationEorgSyn\\automated_platform')
-# from .....Masterarbeit_AutomationEorgSyn.automated_platform.module.liquid_handlers.exception_decorator import error_handler
-# from liquid_handlers.exception_decorator import error_handler
-sys.path.append('C:\\Users\\rcpe\\Desktop\\Masterarbeit_AutomationEorgSyn\\automated_platform\\module\\lab_equipment\\active_components\\gsioc')
-from exception_decorator import error_handler
+from immortility_decorator import error_handler
 
 def logging_handler(fun):
     """

@@ -15,7 +15,7 @@ from tabulate import tabulate
 from gsioc import gsioc_Protocol, check_xy_position_change, ensure_xy_position_will_be_reached
 from immortility_decorator import error_handler, random_error_emulator
 import run_syrringe_pump
-import duration_caluclator
+import duration_calculator
 import run_identifier
 import monitor_BKP
 import sound
@@ -23,56 +23,87 @@ import sound
 from loguru import logger
 
 TESTING_ACTIVE = True
-###### communication ######
-PORT1   = 'COM3'    #port for GX-241 liquid handler - Ubuntu: '/dev/ttyUSB0'
-PORT2   = 'COM4'    #port for BK Precision 1739 - Ubuntu: '/dev/ttyUSB1'
-##### Adapt this URL to the desired OPC-UA endpoint #####
-OPC_UA_SERVER_URL = "opc.tcp://127.0.0.1:36090/freeopcua/server/" # "opc.tcp://rcpeno02341:5000/" # OPC Server on new RCPE laptop # "opc.tcp://18-nf010:5000/" #OPC Server on FTIR Laptop # "opc.tcp://rcpeno00472:5000/" #OPC Server on RCPE Laptop
+
+#########################################################
+###### BEGIN ### communication settings ### BEGIN #######
 #########################################################
 
-EMAIL_ADDRESS = 'automated_platform@gmx.at'
-EMAIL_ENTRANCE = 'AbC456DeF123' 
+PORT1   = 'COM3'    #port for GX-241 liquid handler - Ubuntu: '/dev/ttyUSB0'
+PORT2   = 'COM4'    #port for BK Precision 1739 - Ubuntu: '/dev/ttyUSB1'
 
-###### experimental ######
-DILLUTION_BA = []#[20,20,20,20,15,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20]#['1:1','10:1','100:1','1000:1']  # 'parts of parts': "1:1" = 1 volume increment out of 1 volume increments is the reagent, or "10:1" = 1 volume increments of A out of 10 volume increments of A, or 9+1 volume increments.
-#[0,0,0,0]       # (uL/min)
-CURRENTS = [2.5,2.5,2.5,2.7,2.7,2.7,2.9,2.9,2.9,3.1,3.1,3.1,3.3,3.3,3.3,3.5,3.5,3.5,3.7,3.7,3.7,3.9,3.9,3.9,4.2,4.2,4.2,4.5,4.5,4.5,4.8,4.8,4.8,5.2,5.2,5.2,5.6,5.6,5.6,6,6,6]
-# for i in range(len(CURRENTS)):
-#     CURRENTS[i] = CURRENTS[i]/11.42
+##### Adapt this URL to the desired OPC-UA endpoint #####
+OPC_UA_SERVER_URL = "opc.tcp://127.0.0.1:36090/freeopcua/server/" # "opc.tcp://rcpeno02341:5000/" # OPC Server on new RCPE laptop # "opc.tcp://18-nf010:5000/" #OPC Server on FTIR Laptop # "opc.tcp://rcpeno00472:5000/" #OPC Server on RCPE Laptop
 
-FLOW_A  = []#[2400,2500,2400,2500]         # (uL/min)
-FLOW_B  = []#124,124,124,124,248]
+#########################################################
+####### BEGIN ### experimental settings ### BEGIN #######
+#########################################################
 
-CHARGE_VALUES = [2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3]
-CONCENTRATIONS = np.full(len(CURRENTS),(0.025)).tolist() # generates similar concentration values for each experiment, used in calculating the flow rates. 
-FARADAY_CONST = constants.physical_constants['Faraday constant'][0] # in ((A*s)/mol)
-MAX_FLOWRATE_A = 2500 # μL/min
-MAX_FLOWRATE_B = 250 # μL/min
+# Volumetric relation of substance in pump B to substance in pump A (float)
+DILLUTION_BA = [] 
+# Experimental Current in (mA)
+CURRENTS = [2.5,2.5,2.5,2.7,2.7,2.7,2.9,2.9,2.9,3.1,3.1,3.1,3.3,3.3,3.3,3.5,3.5,3.5,3.7,3.7,3.7,3.9,3.9,3.9,4.2,4.2,4.2,4.5,4.5,4.5,4.8,4.8,4.8,5.2,5.2,5.2,5.6,5.6,5.6,6,6,6] 
+# Flow rate of pump A (μL/min)
+FLOW_A  = [] 
+# Flow rate of pump B in (μL/min)
+FLOW_B  = []
+# Molar charge of the redox reaction in (F/mol)
+CHARGE_VALUES = [2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3] 
+# Generates similar concentration values for each experiment, used in calculating the flow rates (float). 
+CONCENTRATIONS = np.full(len(CURRENTS),(0.025)).tolist() 
+# Faraday Constant in ((A*s)/mol)
+FARADAY_CONST = constants.physical_constants['Faraday constant'][0] 
+# Maximum flow rate of pump A (μL/min)
+MAX_FLOWRATE_A = 2500 
+# Maximum flow rate of pump B (μL/min)
+MAX_FLOWRATE_B = 250 
+# Operate on constant Flow Rate of pump A (float)
 CONSTANT_A_FLOWRATE = MAX_FLOWRATE_A/3
-STADY_STATE_RINSING_FACTOR = np.full(len(CHARGE_VALUES),(3)).tolist()#[1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5]#[1.5,1.5,1.5]#[1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5] # rinsing factor to gain information about the reactors stady state 
+# Rinsing factor to gain information about the reactors stady state (float)
+STADY_STATE_RINSING_FACTOR = np.full(len(CHARGE_VALUES),(3)).tolist()
+# Starting from experiment with this 1-based integer number (int)
 CONDUCTION_FROM_EXP = int(1)
+# Skipping the filling of the pumps (True/False)
 SKIP_FILLING = False
-# factor between small and big reactor: 11.42
+
+# Calculates the flow rate of pump B from input of currents, concentrations and charge values.
 if FLOW_B==[]:
     for i in range(len(CURRENTS)):
-        FLOW_B.append(int((CURRENTS[i] * 1000) / (CONCENTRATIONS[i] * CHARGE_VALUES[i] * (FARADAY_CONST/60)))) #formula units: (mL/min) = ((mA) * 1000) / ( (mol/L) * (1) * ( ((A*sec)/mol) / (sec)) ) )
+        # formula units: (mL/min) = ((mA) * 1000) / ( (mol/L) * (1) * ( ((A*sec)/mol) / (sec)) ) )
+        FLOW_B.append(int((CURRENTS[i] * 1000) / (CONCENTRATIONS[i] * CHARGE_VALUES[i] * (FARADAY_CONST/60)))) 
+
+# Calculates the dillution factors of 
 if DILLUTION_BA==[]:
     for i in range(len(FLOW_B)):
         FLOW_A.append(CONSTANT_A_FLOWRATE)
+
 if FLOW_A==[]:
     for i in range(len(FLOW_B)):
         FLOW_A.append(int(FLOW_B[i] * DILLUTION_BA[i]))
+
+# Calculates the dillution factors pump A / pump B from the flow rate pump A and flow rate pump B. 
 if DILLUTION_BA==[]:
     for i in range(len(FLOW_B)):
-        DILLUTION_BA.append(FLOW_A[i]/FLOW_B[i])
+        DILLUTION_BA.append(FLOW_B[i]/FLOW_A[i])
+
+# Calculates the currents from inputted flow rate of pump B, concentrations and charge values.
 if CURRENTS==[]:
     for i in range(len(FLOW_B)):
         CURRENTS.append(((FLOW_B[i] * CONCENTRATIONS[i] * CHARGE_VALUES[i] * (FARADAY_CONST/60)) / 1000 ))
+
+# Calculates the charge values from inputted flow rate of pump B, currents and concentrations.
 if CHARGE_VALUES==[]:
     for i in range(len(FLOW_B)):
         CHARGE_VALUES.append(int((CURRENTS[i] * 1000) / (CONCENTRATIONS[i] * FLOW_B[i] * (FARADAY_CONST/60)))) #formula units: (mL/min) = ((mA) * 1000) / ( (mol/L) * (1) * ( ((A*sec)/mol) / (sec)) ) )
 
-VOLTAGES = np.full(len(FLOW_B),(12)).tolist() #[6,6,6,6,6]        # (V) float or int
+# experimental maximum voltages in (V)
+VOLTAGES = np.full(len(FLOW_B),(12)).tolist() 
+
+#########################################################
+######### END ### experimental settings ### END #########
+#########################################################
+
+
+
 
 
 ###################### FORMAT INPUT ############################
@@ -96,11 +127,11 @@ def format_current(currents_in: list, max_current: float | int = 999.9) -> list:
                 currents_out.append(n)
             else:
                 currents_out.append(np.nan)
-                print(f'value "{n}" out of range: {RANGE_CURRENT}')
+                logger.critical(f'value "{n}" out of range: {RANGE_CURRENT}')
             pass
         except TypeError:
             currents_out.append(np.nan)
-            print(f'value "{n}" is not a number')
+            logger.critical(f'value "{n}" is not a number')
             pass
     if None in currents_out:
         sys.exit(f'value "{n}" out of range: {RANGE_CURRENT}')
@@ -126,11 +157,11 @@ def format_voltage(voltages_in: list, max_voltage: float | int = 30) -> list:
                 voltages_out.append(n)
             else:
                 voltages_out.append(np.nan)
-                print(f'value "{n}" out of range: {RANGE_VOLTAGE}')
+                logger.critical(f'value "{n}" out of range: {RANGE_VOLTAGE}')
             pass
         except TypeError:
             voltages_out.append(np.nan)
-            print(f'value "{n}" is not a number')
+            logger.critical(f'value "{n}" is not a number')
             pass
     return  voltages_out
 
@@ -152,22 +183,18 @@ def format_flowrate(flowrates_in: list, max_pump_flowrate: float | int ) -> list
                 flowrates_out.append(n)
             else:
                 flowrates_out.append(np.nan)
-                print(f'value "{n}" out of range: {RANGE_FLOWRATE}')
+                logger.critical(f'value "{n}" out of range: {RANGE_FLOWRATE}')
             pass
         except TypeError:
             flowrates_out.append(np.nan)
-            print(f'value "{n}" is not a number')
+            logger.critical(f'value "{n}" is not a number')
             pass
     return flowrates_out
 
-        
-# print(format_current([5.5788,9902.2,12.1251223,'cat',00.1]))
-# print(format_voltage([5.5788,9902.2,12.1251223,'cat',00.1]))
-# print(format_flowrate([9.999,456.600,54,2600,'cat',10.1],2500))
 
-# sys.exit('please, delete this line to run the script')
-
-####################### GENERATE A DOCUMENTATION TABLE ###################
+#############################################################################################
+################################## Documentation ############################################
+#############################################################################################
 
 def get_run_id():
     """Generates a unique ID.
@@ -189,8 +216,6 @@ def get_run_id():
     return run_id
 
 
-run_num = run_identifier.get_run_number()
-
 
 def get_documentation(id: int) -> None:
     """Writes out all experimental parameters for double checking and documentation into the log/ directory.
@@ -198,6 +223,7 @@ def get_documentation(id: int) -> None:
     :ouputs: Excel File with named like "233-documentation-LlPA-5969-urAY-9208", where the initial number is the local run number, the tailing code a unique identifier.
     :prints: A formatted Table of all experimental parameters to the terminal.
     """
+    run_num = run_identifier.get_run_number()
     # print(f'currents: {CURRENTS}\nvoltages: {VOLTAGES}\n dillutions b/a: {DILLUTION_BA}\ncharge values: {CHARGE_VALUES}\n concentrations: {CONCENTRATIONS}\nstady state factors: {STADY_STATE_RINSING_FACTOR}')
     df = pd.DataFrame({
         "Sample \nNumber": np.arange(start=1, stop=len(CURRENTS)+1,step=1).tolist(),
@@ -215,13 +241,15 @@ def get_documentation(id: int) -> None:
     for i in range(len(CHARGE_VALUES)):
         grouped = df.groupby("z-Values \n(F/mol)").get_group(CHARGE_VALUES[i])
         groups.append(grouped)
-    print(tabulate(df, headers='keys', tablefmt='psql'))
+    logger.info(f"\n\n{tabulate(df, headers='keys', tablefmt='psql')}\n\n")
+    # print(tabulate(df, headers='keys', tablefmt='psql'))
     df.to_excel(f'logs/{run_num}-documentation-{id}.xlsx')
     groups = pd.concat(groups)
 
     
 RUN_ID = get_run_id()
 
+#############################################################################################
 #############################################################################################
 #############################################################################################
 
@@ -244,17 +272,15 @@ class Rack():
         indices=np.where(array_order==vial_position)
         # print(str(f'indices are: {indices}'))
         if len(indices)==2 and len(indices[0])==1:
-            print(f'a unique vial number was chosen: {vial_position}, with indices i={indices[0]}, j={indices[1]}')
+            logger.debug(f'a unique vial number was chosen: {vial_position}, with indices i={indices[0]}, j={indices[1]}')
             return indices
         elif len(indices)==2 and len(indices[0])==0 and tolerance.lower()=='no':                #tolerance settings
             #REMOVE THIS STATEMENT!!!
             sys.exit(f'fatal error: zero vials with position number {vial_position}')                        #REMOVE THIS STATEMENT!!!
         else:
-            print(f'warning: multiple vials with position number {vial_position}')
+            logger.warning(f'warning: multiple vials with position number {vial_position}')
             return indices
         
-#########################################################################################
-
 class Rackcommands(): 
     """Representation for Commands connected to the Rack of the flow setup."""
 
@@ -265,8 +291,6 @@ class Rackcommands():
         self.rack_position_offset_x=rack_position_offset_x
         self.rack_position_offset_y=rack_position_offset_y
         
-    ############################# FUNDAMENTAL POSITIONAL COMMANDS #####################################
-
     def get_xy_command(self, vial_pos: int, tolerance: str = 'no') -> str: #speed 125mm/s, force 100%
         """returns a str object command suitable for the liquid handler rx-241"""
         index_y,index_x=self.rack.get_vial_indices(vial_pos,self.rack_order,tolerance)
@@ -280,10 +304,7 @@ class Rackcommands():
                 command.append(str(f'X{distance_x}/{distance_y}'))
             return command
         else:
-            print("error: len(index_x) != len(index_y) ")
-
-
-#####################################################################################################
+            logger.error("error: len(index_x) != len(index_y) ")
 
 class Vial():
     """Representation for a Vial within the flow setup."""
@@ -293,8 +314,6 @@ class Vial():
         self.vial_height=vial_height                        #height in mm
         self.vial_free_depth=vial_free_depth                #depth in mm
         self.sum_liquid_level = 0
-
-#####################################################################################################
 
 class SetupVolumes():
     """Representation for all volumes within the flow setup to calculate the proper rinsing times."""
@@ -526,11 +545,11 @@ def get_prediction(flow_rates_a: list, flow_rates_b: list, plot: bool = True) ->
     :param plot: Bool, plots the experiment duration when set to True.
     :returns: List of predicted times.
     """
-    cummulated_flowrates=duration_caluclator.get_cummulated_flows(flow_rates_a,flow_rates_b)
-    predicted_times=duration_caluclator.get_times(cummulated_flowrates)
+    cummulated_flowrates=duration_calculator.get_cummulated_flows(flow_rates_a,flow_rates_b)
+    predicted_times=duration_calculator.get_times(cummulated_flowrates)
     logger.info(f'<<< predicted durations of the experiments (setup1 fitted curve model) in ascending order: {predicted_times} >>>')
     if plot:
-        duration_caluclator.plot_time_func(cummulated_flowrates)
+        duration_calculator.plot_time_func(cummulated_flowrates)
     return predicted_times
 
 
@@ -640,7 +659,7 @@ def collect_rxn(flow_rate_A: int, flow_rate_B: int, volumes_of_setup: SetupVolum
         if dim_inject(gsioc_directinjectionmodule):
             end=time.time()
             if ((collect_fraction_time)-(end-start))>0:
-                logger.info(f'<<< collecting {(((flow_rate_A+flow_rate_B)*(collect_fraction_time/60))/1000)} [mL] >>>')
+                logger.info(f'<<< collecting {(((flow_rate_A+flow_rate_B)*(collect_fraction_time/60))/1000)} [mL] over the course of {round(collect_fraction_time)} (sec) >>>')
                 time.sleep(collect_fraction_time-(end-start))
             else:
                 logger.debug(f'<<< switching time ({end-start} sec) is longer than collecting time ({collect_fraction_time} sec) (fraction collection) >>>')
@@ -649,11 +668,9 @@ def collect_rxn(flow_rate_A: int, flow_rate_B: int, volumes_of_setup: SetupVolum
         with open('logs/procedural_data.txt','r') as file:
             lines = file.readlines()
             exp_finished = int(str(lines[1]).strip())
-            addr = str(lines[3]).strip()
-            entr = str(lines[4]).strip()
             logger.debug(f'opened file "procedural_data.txt" successfully. value for finished experiments is {exp_finished}.')
         with open('logs/procedural_data.txt','w') as file:
-            file.write(str(os.getpid())+'\n'+str(exp_finished+1)+'\n'+str(len(CURRENTS))+'\n'+str(addr)+'\n'+str(entr))
+            file.write(str(os.getpid())+'\n'+str(exp_finished+1)+'\n'+str(len(CURRENTS)))
             logger.info(f'wrote file "procedural_data.txt" successfully to finished experiments {str(exp_finished+1)}.')
         gsioc_liquidhandler.connect()
         time.sleep(5)
@@ -845,11 +862,9 @@ def automation_main(remote: bool = False, conduction: int = 1) -> None:
         with open('logs/procedural_data.txt','r') as file:
             lines = file.readlines()
             exp_finished = int(str(lines[1]).strip())
-            addr = str(lines[3]).strip()
-            entr = str(lines[4]).strip()
             logger.info(f'opened file "procedural_data.txt" successfully. value for finished experiments is {exp_finished}.')
         with open('logs/procedural_data.txt','w') as file:
-            file.write(str(os.getpid())+'\n'+str(exp_finished)+'\n'+str(len(CURRENTS))+'\n'+str(addr)+'\n'+str(entr))
+            file.write(str(os.getpid())+'\n'+str(exp_finished)+'\n'+str(len(CURRENTS)))
             logger.info(f'wrote file "procedural_data.txt" successfully to finished experiments {str(exp_finished+1)}.')
         allowance2 = 'y'
         CONDUCTION_FROM_EXP = conduction
@@ -865,7 +880,7 @@ def automation_main(remote: bool = False, conduction: int = 1) -> None:
         g2.bCommand('VL')
         g.connect()
         g.bCommand('H')
-        run_experiments(format_flowrate(FLOW_A,MAX_FLOWRATE_A), format_flowrate(FLOW_B,MAX_FLOWRATE_B), 1, get_prediction(FLOW_A,FLOW_B,plot=True))         # starts pumps and liquid handler and pumps 1mL to each defined Vial.
+        run_experiments(format_flowrate(FLOW_A,MAX_FLOWRATE_A), format_flowrate(FLOW_B,MAX_FLOWRATE_B), 1, get_prediction(FLOW_A, FLOW_B, plot=False))         # starts pumps and liquid handler and pumps 1mL to each defined Vial.
         proc.join()
         asyncio.run(set_power_supply(bkp_port,['OUT OFF\r']))
         asyncio.run(deactivate_pump())
@@ -882,5 +897,5 @@ def automation_main(remote: bool = False, conduction: int = 1) -> None:
 
 ##################################################################################
 if __name__ == '__main__':
-    logger.add(sink="logs/combined_logs.log", level='INFO', format='<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>')
+    logger.add(sink="logs/general.log", level='INFO', format='<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>', filter=lambda log_details: log_details['module'] != 'monitor_BKP')
     automation_main()
