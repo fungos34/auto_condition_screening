@@ -218,7 +218,7 @@ def start_watchdog() -> None:
 #### Graphical User Interface (GUI)
 A simple GUI enables the operator to carry out some basic operations during setting up the flow setup. 
 
-![Graphical User Interface for basic interactions during setup configuration](GUI.png)
+![Graphical User Interface for basic interactions during setup configuration](docs/GUI.png)
 
 ```
 def start_gui() -> None:
