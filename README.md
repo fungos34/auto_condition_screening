@@ -1,4 +1,4 @@
-# Auto Condition Screening
+# Documentation - Auto Condition Screening
 
 The **auto_condition_screening** python script automates electrochemical reaction condition screening using Gilson Equipment, Syrris Asia pumps, and a BK Precision Power Source, communicating through OPC-UA, RS-232, and GSIOC protocols. Tailored for laboratory settings, it handles liquid handling, syringe pumping, data monitoring, and user interaction, including a GUI and watchdog processes. Its primary execution orchestrates automation, enabling remote data retrieval and flexible experimentation, making it a comprehensive tool for optimizing laboratory workflows and efficient experiment conduct.
 
