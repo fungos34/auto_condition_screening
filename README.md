@@ -187,18 +187,18 @@ You can access an in-depth tutorial that guides you through setting up serial co
 
 ### Running Virtual Devices
 
-Running virtual devices mimics the response behaviour of real devices within the setup.
-The shipped virtual devices mimic the behaviour of 
+Running virtual devices emulates the response behavior of real devices within the setup. The provided virtual devices simulate the behavior of:
 
-Power Supply: 'B+K PRECISION 1739 Revision 1.3'
-Syrringe Pump (continuous): 'Syrris Asia'
-Liquid Handler: 'GSIOC Liquid Handler, GX-241 II'
-Direct Injection Module: 'GSIOC Direct Injection Module, GX D Inject'
-Syrringe Pump (discontinuous): 'GSIOC Syrringe Pump, VERITY 4020'
+- **Power Supply:** 'B+K PRECISION 1739 Revision 1.3'
+- **Syringe Pump (continuous):** 'Syrris Asia'
+- **Liquid Handler:** 'GSIOC Liquid Handler, GX-241 II'
+- **Direct Injection Module:** 'GSIOC Direct Injection Module, GX D Inject'
+- **Syringe Pump (discontinuous):** 'GSIOC Syringe Pump, VERITY 4020'
 
-To start them open a new commandline window (on WINDOWS: press "Windows Key" and type "cmd", press "Enter") change directory to your root directory and "auto_condition_screening/tests/". From here, run the following command.
+To start them, open a new command line window (on WINDOWS: press "Windows Key" and type "cmd", then press "Enter"). Change the directory to your root directory and navigate to "auto_condition_screening/tests/". From here, run the following command:
+
 ```
-python ./virtual_bkp_device.py      # alternatively run "virtual_gsioc_device.py" or "virtual_syrrisasia_device.py"
+python ./virtual_bkp_device.py      # alternatively, run "virtual_gsioc_device.py" or "virtual_syrrisasia_device.py"
 ``` 
 
 ![logging info of a virtual BKP](docs/virtual_bkp.png)
