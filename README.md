@@ -4,8 +4,6 @@ Python script for automated screening of electrochemical reaction conditions, ut
 # Get Started
 Installation of modules
 
-## run.py
-
 ## Experimental Parameters
 What parameters can be set?
 
@@ -25,25 +23,22 @@ you get lead through a command line interface (CLI) to specify what you want to 
 # Architecture
 About the structure of the script.
 
-
-
 ## Flow Diagram
-Procedure for chemical experiments
+The following Procedure is carried out during the experiments.
 
-## Flow Chemistry Setup Diagram
-For which setup is the script concipated
+![Flow Diagram](flow_diagram.png)
 
-![Flow Setup Diagram](flow_setup.svg)
+## Flow Chemistry Setup and Network Diagram
+The script is concipated for the following setup
 
-## Network Diagram
-This is how the script communicates with devices.
-
+![Flow Setup Diagram](flow_setup.png)
 
 ## File Structure
 This is where you find the files.
 ```
-auto_condition_screening
-|---helper
+auto_condition_screening/
+|
+|---helper/
 |   |---analyzing_logg_file.py
 |   |---auto_read.py
 |   |---logging_decorator.py
@@ -51,13 +46,13 @@ auto_condition_screening
 |   |---read_out_helper.py
 |   |---stem4dplot.py
 |
-|---logs
+|---logs/
 |   |---general.log
 |   |---monitoring.log
 |   |---non_volatile_memory.txt
 |   |---procedural_data.txt
 |
-|---tests
+|---tests/
 |   |---virtual_bkp_device.py
 |   |---virtual_gsioc_device.py
 |   |---virtual_syrrisasia_device.py
@@ -82,8 +77,80 @@ auto_condition_screening
 |---warden.py
 ```
 
-## Moduel Description
-What files contain what content?
+## Module Description
+
+### run.py
+A script designed for automating experimental procedures in a laboratory environment. It encompasses various functionalities including liquid handling, syringe pumping, data monitoring, and user interaction. It also includes functions for setting up the automation, running experiments, collecting reactions, and filling the system. Additionally, there are provisions for starting watchdog processes and a graphical user interface (GUI). The main execution orchestrates the automation process, allowing for remote data retrieval and flexible experimentation. Overall, this script serves as a comprehensive tool for streamlining laboratory workflows and conducting experiments efficiently.
+
+The main experimental settings have to be set in here.
+If some of these parameters are not set by the user, they will get calculated by the system.
+```
+TESTING_ACTIVE = True
+
+PORT1   = 'COM3'    #port for GX-241 liquid handler - Ubuntu: '/dev/ttyUSB0'
+PORT2   = 'COM4'    #port for BK Precision 1739 - Ubuntu: '/dev/ttyUSB1'
+
+##### Adapt this URL to the desired OPC-UA endpoint #####
+OPC_UA_SERVER_URL = "opc.tcp://127.0.0.1:36090/freeopcua/server/" # "opc.tcp://rcpeno02341:5000/" # OPC Server on new RCPE laptop # "opc.tcp://18-nf010:5000/" #OPC Server on FTIR Laptop # "opc.tcp://rcpeno00472:5000/" #OPC Server on RCPE Laptop
+
+# Volumetric relation of substance in pump B to substance in pump A (float)
+DILLUTION_BA = [] 
+# Experimental Current in (mA)
+CURRENTS = [5,15,30] 
+# Flow rate of pump A (μL/min)
+FLOW_A  = [] 
+# Flow rate of pump B in (μL/min)
+FLOW_B  = []
+# Molar charge of the redox reaction in (F/mol)
+CHARGE_VALUES = [3,2,2]
+# Generates similar concentration values for each experiment, used in calculating the flow rates (float). 
+CONCENTRATIONS = np.full(len(CURRENTS),(0.025)).tolist() 
+# Faraday Constant in ((A*s)/mol)
+FARADAY_CONST = constants.physical_constants['Faraday constant'][0] 
+# Maximum flow rate of pump A (μL/min)
+MAX_FLOWRATE_A = 2500 
+# Maximum flow rate of pump B (μL/min)
+MAX_FLOWRATE_B = 250 
+# Operate on constant Flow Rate of pump A (float)
+CONSTANT_A_FLOWRATE = MAX_FLOWRATE_A/3
+# Rinsing factor to gain information about the reactors stady state (float)
+STADY_STATE_RINSING_FACTOR = np.full(len(CHARGE_VALUES),(3)).tolist()
+# Starting from experiment with this 1-based integer number (int)
+CONDUCTION_FROM_EXP = int(1)
+# Skipping the filling of the pumps (True/False)
+SKIP_FILLING = False
+```
+#### Flow Setup variation
+Changes at the setup can be done within this function.
+```
+get_automation_setup():
+"""Sets up the flow setup specific parameters and initializes setup instances, ports and threads."""
+```
+
+#### Monitoring Power Supply
+The Power Supply is queried constantly throughout the process to monitor its parameters. The parameters are logged in a file called "logs/monitoring.log". This is achieved via multithreading.
+```
+class CustomThread(threading.Thread):
+    """Separate thread for querying BKPrecission Power Source parameters parallel to other operations."""
+```
+
+#### Watchdog
+To increase process safety the process is overlooked via a warden process. This process ensures that the process runs to the end and restartes at the appropriate experiment if the process was killed unexpectedly.
+```
+def start_watchdog() -> None:
+    """Runs the warden.py file for ensuring the main process is not killed arbitrary.
+    :expects: the overall process is started from the same directory as "warden.py". Tested only on WINDOWS OS, python has to be on PATH.
+    """
+```
+
+#### Graphical User Interface (GUI)
+A simple GUI enables the operator to carry out some basic operations during setting up the flow setup. 
+```
+def start_gui() -> None:
+    """Runs the GUI for basic commands towards the flow setup devices.
+    :expects: the overall process is started from the same directory as "basic_gui.py". Tested only on WINDOWS OS, python has to be on PATH.
+    """
+```
 
 ## Requirements
 This Software is tested only on WINDOWS OS, for operation of the Syrris Asia pumps it is expected to run their Syrris Asia Desktop application befor starting this script. For serial port emulation during testing it is recommended to use "32bit" 'Virtual Serial Ports Emulator (x32) 1.2.6.788'; free download available [here](https://eterlogic.com/Products.VSPE.html).
