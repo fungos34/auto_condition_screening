@@ -1,8 +1,220 @@
-# auto_condition_screening
-Python script for automated screening of electrochemical reaction conditions, leveraging Gilson Equipment, Syrris Asia pumps, and a BK Precision Power Source. Communication occurs via OPC-UA, RS-232, and GSIOC protocols.
+# Auto Condition Screening
 
-This script is tailored for automating experimental procedures within a laboratory setting. It encompasses a variety of functionalities, including liquid handling, syringe pumping, data monitoring, and user interaction. Additionally, it provides features for initiating watchdog processes and a graphical user interface (GUI). The primary execution orchestrates the automation process, facilitating remote data retrieval and flexible experimentation. Overall, this script serves as a comprehensive tool for optimizing laboratory workflows and conducting experiments efficiently.
+The **auto_condition_screening** python script automates electrochemical reaction condition screening using Gilson Equipment, Syrris Asia pumps, and a BK Precision Power Source, communicating through OPC-UA, RS-232, and GSIOC protocols. Tailored for laboratory settings, it handles liquid handling, syringe pumping, data monitoring, and user interaction, including a GUI and watchdog processes. Its primary execution orchestrates automation, enabling remote data retrieval and flexible experimentation, making it a comprehensive tool for optimizing laboratory workflows and efficient experiment conduct.
 
+## Introduction
+
+[GitHub Repository](https://github.com/fungos34/auto_condition_screening)
+
+Clone this repository to your local machine to access the source code.
+
+### Quick Start
+
+To quickly set up and run the script, follow these steps:
+
+1. Install the required dependencies by running the following command from the root directory "auto_condition_screening/":
+
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+2. Execute the script by running:
+
+    ```bash
+    python ./run.py
+    ```
+
+    The system will prompt you with the following options:
+
+    - `starting position change? (y/n)`: Answer "y" to start the GUI for direct device interactions or "n" to proceed to the next prompt.
+    
+    - `starting experiments (further settings are queried afterwards)? (y/n)`: Answer "n" to exit the script or "y" to proceed to the next prompt.
+    
+    - `from which experiment number do you want to start? (integer number)`: Provide an integer number to select the experiment to start with. The first experiment is numbered 1 (not 0).
+
+    - `Do you want to carry out the initialization procedure including filling the reactor? (y/n)`: Answer "y" to fill the pumps and the system (reactor, tubings, etc.) with prepared chemicals or "n" to skip this step and start the experimental procedures.
+
+### Flow Diagram
+
+The experimental procedure consists of several procedural steps, some of which repeat themselves with different set parameters to vary the conditions between experiments. Consequently, this script can be utilized to establish a broad spectrum of experimental parameters, including current, cut-off voltage, flow rate for each pump, rinsing procedures, and collection vials. The following procedure is carried out by default during a typical run.
+
+![Flow Diagram](docs/flow_diagram.png)
+
+### Experimental Parameters
+
+Before running the script, ensure that all experimental parameters are properly set to your specific use case. Open the `run.py` file to set the experimental parameters. Be sure to specify the ports properly and set the endpoints for your ports and the OPC-UA Server.
+
+```
+python
+TESTING_ACTIVE = False
+
+PORT1   = 'COM3'    # Port for GX-241 liquid handler
+PORT2   = 'COM4'    # Port for BK Precision 1739
+OPC_UA_SERVER_URL = "opc.tcp://127.0.0.1:36090/freeopcua/server/" 
+```
+(NOTE: The OPC_UA_SERVER_URL parameter must also be set for the GUI separately. Open the "basic_gui.py" file and set this parameter there as well.)
+
+The residual parameters can be set as demanded for the experiments. For example, to conduct three experiments in a row:
+```
+CURRENTS = [2.5, 2.7, 3.7]
+CHARGE_VALUES = [2.5, 2.8, 2.5]
+```
+Ensure all parameters are inputted as lists of parameters, with the first specifying the parameters for the first experiment, and so forth. It is also possible to set other parameters as long as they are not in conflict with each other. For detailed information, refer to the global variable description below.
+
+
+### Global Variable Description
+To run the script, the main experimental settings have to be set in here.
+If some of these parameters are not set by the user, they will get calculated by the system.
+
+##### Device Endpoints (Ports, URL's) 
+```
+TESTING_ACTIVE = True
+
+PORT1   = 'COM3'    #port for GX-241 liquid handler - Ubuntu: '/dev/ttyUSB0'
+PORT2   = 'COM4'    #port for BK Precision 1739 - Ubuntu: '/dev/ttyUSB1'
+##### Adapt this URL to the desired OPC-UA endpoint #####
+OPC_UA_SERVER_URL = "opc.tcp://127.0.0.1:36090/freeopcua/server/" 
+```
+
+##### Volumetric relation of substance in pump B to substance in pump A (float)
+```
+DILLUTION_BA = [] 
+```
+##### Experimental Current in (mA)
+```
+CURRENTS = [1,2,3,4,5] 
+```
+##### Flow rate of pump A (μL/min)
+```
+FLOW_A  = [] 
+```
+##### Flow rate of pump B in (μL/min)
+```
+FLOW_B  = []
+```
+##### Molar charge of the redox reaction in (F/mol)
+```
+CHARGE_VALUES = [1,2,3,4,5]
+```
+
+##### Generates similar concentration values for each experiment, used in calculating the flow rates (float). 
+```
+CONCENTRATIONS = np.full(len(CURRENTS),(0.025)).tolist() 
+```
+##### Faraday Constant in ((A*s)/mol)
+```
+FARADAY_CONST = constants.physical_constants['Faraday constant'][0] 
+```
+##### Maximum flow rate of pump A (μL/min)
+```
+MAX_FLOWRATE_A = 2500 
+```
+##### Maximum flow rate of pump B (μL/min)
+```
+MAX_FLOWRATE_B = 250 
+```
+##### Operate on constant Flow Rate of pump A (float)
+```
+CONSTANT_A_FLOWRATE = MAX_FLOWRATE_A/3
+```
+##### Rinsing factor to gain information about the reactors stady state (float)
+```
+STADY_STATE_RINSING_FACTOR = np.full(len(CHARGE_VALUES),(3)).tolist()
+```
+##### Starting from experiment with this 1-based integer number (int)
+```
+CONDUCTION_FROM_EXP = int(1)
+```
+##### Skipping the filling of the pumps (True/False)
+```
+SKIP_FILLING = False
+```
+
+### Flow Setup variation
+Changes at the setup can be done within this function. Please note, that changes can only taken considering the underlying volumes by changing their values. A change of the devices connectivity consecutively leads to necessary code changes within the main functions of the main file "run.py".
+```
+get_automation_setup():
+"""Sets up the flow setup specific parameters and initializes setup instances, ports and threads."""
+```
+
+### Monitoring Power Supply
+The Power Supply is queried constantly throughout the process to monitor its parameters. The parameters are logged in a file called "logs/monitoring.log". This is achieved via multithreading.
+```
+class CustomThread(threading.Thread):
+    """Separate thread for querying BKPrecission Power Source parameters parallel to other operations."""
+```
+
+### Watchdog
+To increase process safety the process is overlooked via a warden process. This process ensures that the process runs to the end and restartes at the appropriate experiment if the process was killed unexpectedly.
+```
+def start_watchdog() -> None:
+    """Runs the warden.py file for ensuring the main process is not killed arbitrary.
+    :expects: the overall process is started from the same directory as "warden.py". Tested only on WINDOWS OS, python has to be on PATH.
+    """
+```
+
+### Graphical User Interface (GUI)
+The provided GUI enables the operator to easily carry out default operations at the setup during installation of the flow setup. 
+A user-friendly interface simplifies in addition the operation of the automated platform, making it accessible to researchers with varying levels of technical expertise. Intuitive controls and clear instructions reduce the learning curve and enable users to interact with the platform effortlessly.
+It enhances usability, control, customization, data visualization, error handling, integration with external systems, and accessibility. By prioritizing user experience and functionality, the interface maximizes the efficiency, effectiveness, and utility of the automated platform for researchers in various scientific disciplines.
+
+![Graphical User Interface for basic interactions during setup configuration](docs/GUI.png)
+
+```
+def start_gui() -> None:
+    """Runs the GUI for basic commands towards the flow setup devices.
+    :expects: the overall process is started from the same directory as "basic_gui.py". Tested only on WINDOWS OS, python has to be on PATH.
+    """
+```
+
+
+
+## Module Description
+
+### Basic GUI
+The `basic_gui.py` script provides a graphical user interface for direct device interactions. It allows users to control various equipment, initiate experiments, and monitor progress.
+
+### Commands
+The `commands.py` file contains functions for configuring and controlling various equipment used in automated experimental procedures. It provides capabilities for setting pump flow rates, activating/deactivating pumps, configuring the BKPrecission Power Source, and controlling the Direct Injection Module.
+
+### Documentation
+The `documentation.py` file contains functions for generating unique IDs, writing experimental parameters to Excel files for documentation, and retrieving predictions for experiment durations. It facilitates comprehensive documentation and analysis of experimental results.
+
+### Duration Calculator
+The `duration_calculator.py` script contains functions for calculating the time required for each experimental cycle in a specific setup. It predicts the duration of experimental cycles based on setup-specific parameters such as tubing volumes, pump characteristics, and collected fraction size.
+
+### Flow Setup
+The `flow_setup.py` file contains classes and functions related to the representation and manipulation of components within the flow setup for experiments. It handles aspects such as racks, vials, and volumes used in the setup.
+
+### Formatters
+The `formatters.py` file provides functions for formatting input lists of numbers (floats or integers) and returning formatted lists with string entries. It ensures that input data used in the flow setup are properly formatted for further processing.
+
+### GSIOC
+The `gsioc.py` file contains a class and utility functions for handling communication with GSIOC devices. It provides a flexible interface for interacting with GSIOC devices, including error handling and position checking functionalities.
+
+### Immortality Decorator
+The `immortality_decorator.py` script contains decorators and utility functions for handling errors and exceptions in Python functions. It enhances error handling and testing capabilities by allowing functions to be retried a specified number of times in case of failure.
+
+### Monitor BKP
+The `monitor_BKP.py` script uses PySerial to monitor a B+K Precision 1739 device via RS232 communication. It periodically sends commands to the device and logs the responses, along with any errors, to a log file.
+
+### Protocol Power Supply
+The `protocol_power_supply.py` script provides protocol methods to communicate with a B+K PRECISION 1739 Revision 1.3 device via RS-232 serial communication. It facilitates sending commands to the device, receiving responses, and error handling functionalities.
+
+### Run Identifier
+The `run_identifier.py` script manages a run identifier stored in a non-volatile memory file. It allows for resetting the run identifier, incrementing it by one, and retrieving the current run number, ensuring the persistence of the run identifier across script executions.
+
+### Run Syringe Pump
+The `run_syrringe_pump.py` script facilitates communication with a Syrris pump via OPC-UA protocol. It allows activation, deactivation, setting flow rates, and reading pressure values from the pump, providing comprehensive control over pump operations.
+
+### Sound
+The `sound.py` script provides functions to generate specific sounds using PyAudio and NumPy libraries, enhancing user feedback during script execution.
+
+### Warden
+The `warden.py` script serves as a watchdog process that monitors the status of another process and restarts it if necessary. It provides functions to retrieve process information and ensures the reliability of the automated experimental setup.
+
+
+<!-- 
 # Introduction
 Get the source code [here](https://github.com/fungos34/auto_condition_screening).
 
@@ -67,7 +279,7 @@ CHARGE_VALUES = [2.5, 2.8, 2.5]
 the residual parameters will be calculated automatically.
 It is also possible to set other parameters, as long as they are not in conflict with each other.
 For detailes see the Module Description below.
-NOTE: all parameters have to be inputted as a list of parameters. the first of them is always specifying the first experiment, and so forth.
+NOTE: all parameters have to be inputted as a list of parameters. the first of them is always specifying the first experiment, and so forth. -->
 
 ## Logging
 
@@ -197,93 +409,6 @@ auto_condition_screening/
 
 ## Module Description
 
-### Experimental parameters
-To run the script the main experimental settings have to be set in here.
-If some of these parameters are not set by the user, they will get calculated by the system.
-```
-TESTING_ACTIVE = True
-
-PORT1   = 'COM3'    #port for GX-241 liquid handler - Ubuntu: '/dev/ttyUSB0'
-PORT2   = 'COM4'    #port for BK Precision 1739 - Ubuntu: '/dev/ttyUSB1'
-
-##### Adapt this URL to the desired OPC-UA endpoint #####
-OPC_UA_SERVER_URL = "opc.tcp://127.0.0.1:36090/freeopcua/server/" 
-
-# Volumetric relation of substance in pump B to substance in pump A (float)
-DILLUTION_BA = [] 
-
-# Experimental Current in (mA)
-CURRENTS = [1,2,3,4,5] 
-
-# Flow rate of pump A (μL/min)
-FLOW_A  = [] 
-
-# Flow rate of pump B in (μL/min)
-FLOW_B  = []
-
-# Molar charge of the redox reaction in (F/mol)
-CHARGE_VALUES = [1,2,3,4,5]
-
-# Generates similar concentration values for each experiment, used in calculating the flow rates (float). 
-CONCENTRATIONS = np.full(len(CURRENTS),(0.025)).tolist() 
-
-# Faraday Constant in ((A*s)/mol)
-FARADAY_CONST = constants.physical_constants['Faraday constant'][0] 
-
-# Maximum flow rate of pump A (μL/min)
-MAX_FLOWRATE_A = 2500 
-
-# Maximum flow rate of pump B (μL/min)
-MAX_FLOWRATE_B = 250 
-
-# Operate on constant Flow Rate of pump A (float)
-CONSTANT_A_FLOWRATE = MAX_FLOWRATE_A/3
-
-# Rinsing factor to gain information about the reactors stady state (float)
-STADY_STATE_RINSING_FACTOR = np.full(len(CHARGE_VALUES),(3)).tolist()
-
-# Starting from experiment with this 1-based integer number (int)
-CONDUCTION_FROM_EXP = int(1)
-
-# Skipping the filling of the pumps (True/False)
-SKIP_FILLING = False
-```
-### Flow Setup variation
-Changes at the setup can be done within this function. Please note, that changes can only taken considering the underlying volumes by changing their values. A change of the devices connectivity consecutively leads to necessary code changes within the main functions of the main file "run.py".
-```
-get_automation_setup():
-"""Sets up the flow setup specific parameters and initializes setup instances, ports and threads."""
-```
-
-### Monitoring Power Supply
-The Power Supply is queried constantly throughout the process to monitor its parameters. The parameters are logged in a file called "logs/monitoring.log". This is achieved via multithreading.
-```
-class CustomThread(threading.Thread):
-    """Separate thread for querying BKPrecission Power Source parameters parallel to other operations."""
-```
-
-### Watchdog
-To increase process safety the process is overlooked via a warden process. This process ensures that the process runs to the end and restartes at the appropriate experiment if the process was killed unexpectedly.
-```
-def start_watchdog() -> None:
-    """Runs the warden.py file for ensuring the main process is not killed arbitrary.
-    :expects: the overall process is started from the same directory as "warden.py". Tested only on WINDOWS OS, python has to be on PATH.
-    """
-```
-
-### Graphical User Interface (GUI)
-The provided GUI enables the operator to easily carry out default operations at the setup during installation of the flow setup. 
-A user-friendly interface simplifies in addition the operation of the automated platform, making it accessible to researchers with varying levels of technical expertise. Intuitive controls and clear instructions reduce the learning curve and enable users to interact with the platform effortlessly.
-It enhances usability, control, customization, data visualization, error handling, integration with external systems, and accessibility. By prioritizing user experience and functionality, the interface maximizes the efficiency, effectiveness, and utility of the automated platform for researchers in various scientific disciplines.
-
-![Graphical User Interface for basic interactions during setup configuration](docs/GUI.png)
-
-```
-def start_gui() -> None:
-    """Runs the GUI for basic commands towards the flow setup devices.
-    :expects: the overall process is started from the same directory as "basic_gui.py". Tested only on WINDOWS OS, python has to be on PATH.
-    """
-```
 
 ## File Documentation
 
