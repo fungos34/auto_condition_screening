@@ -145,7 +145,7 @@ With more complex data results may look like this:
 This overview over the software architecture enhances transparency, collaboration, and the ability to effectively manage and evolve complex software systems.
 
 ## Flow Chemistry Setup and Network Diagram
-The script is concipated for the following setup
+This script is concipated for the following flow setup to utilize full automated electroorganic synthesis.
 
 ![Flow Setup Diagram](docs/flow_setup.png)
 
@@ -510,13 +510,17 @@ This script uses PySerial to monitor a B+K Precision 1739 device via RS232 commu
 - **PORT**: Specifies the COM port for the serial connection.
 - **COMMANDS**: Specifies the commands to be sent to the device.
 
-- **`get_port(logger, com_port)`:** Initializes the serial port connection.
+- **`get_port(logger, com_port)`:** 
+    - Initializes the serial port connection.
 
-- **`get_commands(commands)`:** Generates a list of commands to be sent to the device.
+- **`get_commands(commands)`:** 
+    - Generates a list of commands to be sent to the device.
 
-- **`get_values(commands_list, port, logger)`:** Sends the specified commands to the device in an infinite loop, reads the responses, and logs them along with any errors.
+- **`get_values(commands_list, port, logger)`:** 
+    - Sends the specified commands to the device in an infinite loop, reads the responses, and logs them along with any errors.
 
-- **Error Responses (`error_responses`):** Maps error responses from the device to their interpretations.
+- **Error Responses (`error_responses`):** 
+    - Maps error responses from the device to their interpretations.
 
 - The script runs an asyncio event loop to execute the `get_values` function with the specified commands, serial port, and logger.
 
@@ -530,17 +534,17 @@ This script uses PySerial to monitor a B+K Precision 1739 device via RS232 commu
 This script provides protocol methods to communicate with a B+K PRECISION 1739 Revision 1.3 device via RS-232 serial communication. It facilitates sending commands to the device and receiving responses, along with error handling and monitoring functionalities.
 
 - **(`BKPrecisionRS232`):**
-- A class providing methods for initializing a connection, sending commands, receiving responses, and monitoring the device.
-- Implements error handling, response verification, and interpretation.
-- Supports asynchronous communication using asyncio.
+    - A class providing methods for initializing a connection, sending commands, receiving responses, and monitoring the device.
+    - Implements error handling, response verification, and interpretation.
+    - Supports asynchronous communication using asyncio.
 
 - **(`format_current`, `format_voltage`):**
-- Functions for formatting current and voltage values for the B+K PRECISION 1739 device.
-- Validates input values and returns formatted strings.
+    - Functions for formatting current and voltage values for the B+K PRECISION 1739 device.
+    - Validates input values and returns formatted strings.
 
 - **(`bkp_test_communication`):**
-- A function demonstrating communication with the B+K PRECISION 1739 device by sending test commands.
-- Validates command responses and interprets them using the `BKPrecisionRS232` class.
+    - A function demonstrating communication with the B+K PRECISION 1739 device by sending test commands.
+    - Validates command responses and interprets them using the `BKPrecisionRS232` class.
 
 - The script can be executed directly to perform monitoring functionality (`main` function) or test communication with the device (`bkp_test_communication` function).
 - Communication with the device is established via the RS-232 port specified during class instantiation (`BKPrecisionRS232`).
@@ -556,23 +560,23 @@ This script provides protocol methods to communicate with a B+K PRECISION 1739 R
 The "run_identifier.py" script provides functionality to manage a run identifier stored in a non-volatile memory file. It allows for resetting the run identifier, incrementing it by one, and retrieving the current run number.
 
 - **Memory File (`NON_VOLATILE_MEMORY_FILE`):**
-- Path to the file storing the run identifier.
-- The file is used to maintain the current run number across script executions.
+    - Path to the file storing the run identifier.
+    - The file is used to maintain the current run number across script executions.
 
 - **(`__reset_non_volatile_memory`):**
-- Resets the run identifier to its initial value.
-- Overrides the content of the non-volatile memory file irreversibly.
-- Outputs a critical log message upon successful reset.
+    - Resets the run identifier to its initial value.
+    - Overrides the content of the non-volatile memory file irreversibly.
+    - Outputs a critical log message upon successful reset.
 
 - **(`set_run_number`):**
-- Increments the current run number by one.
-- Updates the run number in the non-volatile memory file.
-- Outputs an informational log message indicating the new run number.
+    - Increments the current run number by one.
+    - Updates the run number in the non-volatile memory file.
+    - Outputs an informational log message indicating the new run number.
 
 - **(`get_run_number`):**
-- Reads the current run number from the non-volatile memory file.
-- Returns the run number as an integer.
-- Outputs an informational log message displaying the current run number.
+    - Reads the current run number from the non-volatile memory file.
+    - Returns the run number as an integer.
+    - Outputs an informational log message displaying the current run number.
 
 - The script can be executed directly to perform actions related to managing the run identifier.
 - When executed directly, it demonstrates functionality such as resetting the run identifier, incrementing it, and retrieving the current run number.
@@ -595,16 +599,16 @@ This script facilitates communication with a Syrris pump via OPC-UA protocol. It
 - Uses OPC-UA protocol to interact with the pump.
 
 - **(`activate`) and (`deactivate`):**
-- Activate: Stops the pump, fills the valve, and waits until the pump is ready to use.
-- Deactivate: Stops the pump, empties the valve, and waits until the pump is deactivated.
+    - Activate: Stops the pump, fills the valve, and waits until the pump is ready to use.
+    - Deactivate: Stops the pump, empties the valve, and waits until the pump is deactivated.
 
 - **(`set_flowrate_to`):**
-- Sets the flow rate parameter to the desired value and waits for the change to take effect.
-- Ensures proper flow rate configuration for pump operation.
+    - Sets the flow rate parameter to the desired value and waits for the change to take effect.
+    - Ensures proper flow rate configuration for pump operation.
 
 - **(`read_pressure`):**
-- Reads the current pressure value from the pump.
-- Provides real-time feedback on pressure conditions.
+    - Reads the current pressure value from the pump.
+    - Provides real-time feedback on pressure conditions.
 
 - The script can be executed directly to perform actions related to controlling the Syrris pump.
 - It demonstrates functionality such as activating the pump, setting flow rates, reading pressure values, and deactivating the pump.
@@ -658,25 +662,25 @@ Provides options for starting experiments, skipping filling procedures, and remo
 
 
 - **`CustomThread`**
-Defines a custom thread for monitoring a BK Precision device.
+    - Defines a custom thread for monitoring a BK Precision device.
 
 - **`run_experiments`**
-Runs the experimental procedure, controlling the flow rates of pumps and collecting data for analysis.
+    - Runs the experimental procedure, controlling the flow rates of pumps and collecting data for analysis.
 
 - **`collect_rxn`**
-Conducts the experimental procedure for collecting reaction mixtures, including setting flow rates and collecting data.
+    - Conducts the experimental procedure for collecting reaction mixtures, including setting flow rates and collecting data.
 
 - **`fill_system`**
-Fills the reactor and tubing with reaction mixture before starting experiments.
+    - Fills the reactor and tubing with reaction mixture before starting experiments.
 
 - **`start_watchdog`**
-Runs a watchdog process to ensure the main process is not terminated arbitrarily.
+    - Runs a watchdog process to ensure the main process is not terminated arbitrarily.
 
 - **`start_gui`**
-Runs a GUI for basic commands towards the flow setup devices.
+    - Runs a GUI for basic commands towards the flow setup devices.
 
 - **`automation_main`**
-Main entry point for the automation script, initializing setup devices and controlling the experimental process.
+    - Main entry point for the automation script, initializing setup devices and controlling the experimental process.
 
 ### sound.py
 The `sound.py` script provides functions to generate specific sounds using PyAudio and NumPy libraries.
