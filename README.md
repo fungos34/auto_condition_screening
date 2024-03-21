@@ -342,19 +342,19 @@ The file "basic_gui.py" is a Python script designed for controlling and monitori
 ### commands.py
 The file "commands.py" contains several functions for configuring and controlling various equipment used in automated experimental procedures.
 
-- `config_pump`: This asynchronous function configures the Syrris Asia pumps according to set flow rates. It connects to the OPC-UA server and operates the pumps accordingly.
+- **`config_pump()`**: This asynchronous function configures the Syrris Asia pumps according to set flow rates. It connects to the OPC-UA server and operates the pumps accordingly.
 
-- `deactivate_pump`: This asynchronous function deactivates both pumps. Similar to `config_pump`, it connects to the OPC-UA server and deactivates the pumps.
+- **`deactivate_pump()`**: This asynchronous function deactivates both pumps. Similar to `config_pump`, it connects to the OPC-UA server and deactivates the pumps.
 
-- `activate_pump`: This asynchronous function activates the pumps based on the provided boolean parameters (`a` and `b`). It connects to the OPC-UA server and activates the specified pumps accordingly.
+- **`activate_pump()`**: This asynchronous function activates the pumps based on the provided boolean parameters (`a` and `b`). It connects to the OPC-UA server and activates the specified pumps accordingly.
 
-- `get_power_command`: This function generates a properly formatted command string for the BKPrecission Power Source based on the provided current and voltage values.
+- **`get_power_command()`**: This function generates a properly formatted command string for the BKPrecission Power Source based on the provided current and voltage values.
 
-- `set_power_supply`: This asynchronous function sets the BKPrecission Power Source by sending a list of properly formatted commands to it.
+- **`set_power_supply()`**: This asynchronous function sets the BKPrecission Power Source by sending a list of properly formatted commands to it.
 
-- `dim_load`: This function switches the Direct Injection Module (DIM) to the Load position and queries the switching position for assurance.
+- **`dim_load()`**: This function switches the Direct Injection Module (DIM) to the Load position and queries the switching position for assurance.
 
-- `dim_inject`: This function switches the Direct Injection Module (DIM) to the Inject position and queries the switching position for assurance.
+- **`dim_inject()`**: This function switches the Direct Injection Module (DIM) to the Inject position and queries the switching position for assurance.
 
 These functions collectively provide control and configuration capabilities for the Syrris Asia pumps, BKPrecission Power Source, and Direct Injection Module, facilitating automated experimental procedures in a laboratory environment.
 
@@ -454,7 +454,7 @@ The file also contains functions related to getting time durations for various p
 ### formatters.py
 This file contains functions for formatting input lists of numbers (floats or integers) and returning formatted lists with string entries. These functions are designed to handle formatting for currents, voltages, and flow rates used in the setup.
 
-- **`format_current`**:
+- **`format_current()`**:
    - Description: Formats an inputted list of currents and returns a formatted list with string entries.
    - Parameters:
      - `currents_in`: Input list of currents.
@@ -466,7 +466,7 @@ This file contains functions for formatting input lists of numbers (floats or in
      - Logs critical messages for invalid inputs.
      - Raises a system exit if any input value is out of range.
 
-- **`format_voltage`**:
+- **`format_voltage()`**:
    - Description: Formats an inputted list of voltages and returns a formatted list with string entries.
    - Parameters:
      - `voltages_in`: Input list of voltages.
@@ -477,7 +477,7 @@ This file contains functions for formatting input lists of numbers (floats or in
      - Formats each voltage entry as a string with leading zeros and two decimal points.
      - Logs critical messages for invalid inputs.
 
-- **`format_flowrate`**:
+- **`format_flowrate()`**:
    - Description: Formats an inputted list of flow rates and returns a formatted list with integer entries.
    - Parameters:
      - `flowrates_in`: Input list of flow rates.
@@ -541,10 +541,10 @@ This file contains two decorators and a utility function for handling errors and
 - **Wrapper Function (`tolerate_errors(*args, **kwargs)`)**:
   - A wrapper function that takes all input arguments and passes them to the decorated function. It catches exceptions and handles them according to the decorator's parameters.
 
-- **(`exception_generator(parent_error)`)**:
+- **`exception_generator(parent_error)`**:
   - Generates a list of all exceptions inherited from the specified parent error.
 
-- **(`random_error_emulator(error_propability, parent_err)`)**:
+- **`random_error_emulator(error_propability, parent_err)`**:
   - Raises a random exception inherited from the specified parent error with a given probability. Useful for testing error handling mechanisms.
   - Prints a list of all inherited exceptions if no error is raised.
 
@@ -559,16 +559,16 @@ This script uses PySerial to monitor a B+K Precision 1739 device via RS232 commu
 - **PORT**: Specifies the COM port for the serial connection.
 - **COMMANDS**: Specifies the commands to be sent to the device.
 
-- **`get_port(logger, com_port)`:** 
+- **`get_port(logger, com_port)`**: 
     - Initializes the serial port connection.
 
-- **`get_commands(commands)`:** 
+- **`get_commands(commands)`**: 
     - Generates a list of commands to be sent to the device.
 
-- **`get_values(commands_list, port, logger)`:** 
+- **`get_values(commands_list, port, logger)`**: 
     - Sends the specified commands to the device in an infinite loop, reads the responses, and logs them along with any errors.
 
-- **Error Responses (`error_responses`):** 
+- **Error Responses (`error_responses`)**: 
     - Maps error responses from the device to their interpretations.
 
 - The script runs an asyncio event loop to execute the `get_values` function with the specified commands, serial port, and logger.
@@ -582,16 +582,16 @@ This script uses PySerial to monitor a B+K Precision 1739 device via RS232 commu
 ### protocol_power_supply.py
 This script provides protocol methods to communicate with a B+K PRECISION 1739 Revision 1.3 device via RS-232 serial communication. It facilitates sending commands to the device and receiving responses, along with error handling and monitoring functionalities.
 
-- **(`BKPrecisionRS232`):**
+- **`BKPrecisionRS232`**:
     - A class providing methods for initializing a connection, sending commands, receiving responses, and monitoring the device.
     - Implements error handling, response verification, and interpretation.
     - Supports asynchronous communication using asyncio.
 
-- **(`format_current`, `format_voltage`):**
+- **`format_current()`, `format_voltage()`**:
     - Functions for formatting current and voltage values for the B+K PRECISION 1739 device.
     - Validates input values and returns formatted strings.
 
-- **(`bkp_test_communication`):**
+- **`bkp_test_communication()`**:
     - A function demonstrating communication with the B+K PRECISION 1739 device by sending test commands.
     - Validates command responses and interprets them using the `BKPrecisionRS232` class.
 
@@ -608,21 +608,21 @@ This script provides protocol methods to communicate with a B+K PRECISION 1739 R
 ### run_identifier.py
 The "run_identifier.py" script provides functionality to manage a run identifier stored in a non-volatile memory file. It allows for resetting the run identifier, incrementing it by one, and retrieving the current run number.
 
-- **Memory File (`NON_VOLATILE_MEMORY_FILE`):**
+- **Memory File (`NON_VOLATILE_MEMORY_FILE`)**:
     - Path to the file storing the run identifier.
     - The file is used to maintain the current run number across script executions.
 
-- **(`__reset_non_volatile_memory`):**
+- **`__reset_non_volatile_memory()`**:
     - Resets the run identifier to its initial value.
     - Overrides the content of the non-volatile memory file irreversibly.
     - Outputs a critical log message upon successful reset.
 
-- **(`set_run_number`):**
+- **`set_run_number()`**:
     - Increments the current run number by one.
     - Updates the run number in the non-volatile memory file.
     - Outputs an informational log message indicating the new run number.
 
-- **(`get_run_number`):**
+- **`get_run_number()`**:
     - Reads the current run number from the non-volatile memory file.
     - Returns the run number as an integer.
     - Outputs an informational log message displaying the current run number.
@@ -647,15 +647,15 @@ This script facilitates communication with a Syrris pump via OPC-UA protocol. It
 - Provides methods to activate, deactivate, set flow rates, and read pressure values.
 - Uses OPC-UA protocol to interact with the pump.
 
-- **(`activate`) and (`deactivate`):**
+- **`activate()` and `deactivate()`**:
     - Activate: Stops the pump, fills the valve, and waits until the pump is ready to use.
     - Deactivate: Stops the pump, empties the valve, and waits until the pump is deactivated.
 
-- **(`set_flowrate_to`):**
+- **`set_flowrate_to()`**:
     - Sets the flow rate parameter to the desired value and waits for the change to take effect.
     - Ensures proper flow rate configuration for pump operation.
 
-- **(`read_pressure`):**
+- **`read_pressure()`**:
     - Reads the current pressure value from the pump.
     - Provides real-time feedback on pressure conditions.
 
@@ -710,63 +710,63 @@ The script can be executed to automate laboratory experiments with predefined se
 Provides options for starting experiments, skipping filling procedures, and remote operation.
 
 
-- **`CustomThread`**
+- **`CustomThread`**:
     - Defines a custom thread for monitoring a BK Precision device.
 
-- **`run_experiments`**
+- **`run_experiments()`**:
     - Runs the experimental procedure, controlling the flow rates of pumps and collecting data for analysis.
 
-- **`collect_rxn`**
+- **`collect_rxn()`**:
     - Conducts the experimental procedure for collecting reaction mixtures, including setting flow rates and collecting data.
 
-- **`fill_system`**
+- **`fill_system()`**:
     - Fills the reactor and tubing with reaction mixture before starting experiments.
 
-- **`start_watchdog`**
+- **`start_watchdog()`**:
     - Runs a watchdog process to ensure the main process is not terminated arbitrarily.
 
-- **`start_gui`**
+- **`start_gui()`**:
     - Runs a GUI for basic commands towards the flow setup devices.
 
-- **`automation_main`**
+- **`automation_main()`**:
     - Main entry point for the automation script, initializing setup devices and controlling the experimental process.
 
 ### sound.py
-The `sound.py` script provides functions to generate specific sounds using PyAudio and NumPy libraries.
+This script provides functions to generate specific sounds using PyAudio and NumPy libraries.
 
-- **`get_noice(duration, frequency)`**
+- **`get_noice(duration, frequency)`**:
    - Creates a noise with specified duration and frequency.
    - Parameters:
      - `duration`: Duration of the noise in seconds.
      - `frequency`: Frequency of the noise in Hz.
 
-- **`get_sound1()`**
+- **`get_sound1()`**:
    - Forms a specific sound pattern 1 by generating multiple noises with predefined durations and frequencies.
 
-- **`get_sound2()`**
+- **`get_sound2()`**:
    - Forms a specific sound pattern 2 by generating multiple noises with predefined durations and frequencies.
 
-- **`get_sound3()`**
+- **`get_sound3()`**:
    - Forms a specific sound pattern 3 by generating a noise with a predefined duration and frequency.
 
 - The script can be imported as a module in other Python scripts to generate specific sounds.
 - If executed directly, it generates a sequence of predefined sounds.
 
 ### warden.py
-The `warden.py` script serves as a watchdog process that monitors the status of another process and restarts it if necessary. It also provides functions to retrieve process information.
+This script serves as a watchdog process that monitors the status of another process and restarts it if necessary. It also provides functions to retrieve process information.
 
-- **`get_process_by_name_or_id(name: str = None, id: int = None)`**
+- **`get_process_by_name_or_id(name: str = None, id: int = None)`**:
    - Finds processes by either name or ID.
    - Parameters:
      - `name`: Name of the process to find.
      - `id`: ID of the process to find.
    - Returns a list of matching processes.
 
-- **`get_automation_process_state() -> Tuple[str, str, str, str]`**
+- **`get_automation_process_state() -> Tuple[str, str, str, str]`**:
    - Retrieves current status of the automation process.
    - Returns a tuple containing process ID, number of successful experiments, overall experiments, and any errors.
 
-- **`restarter()`**
+- **`restarter()`**:
    - Restarts the watched process when it's no longer apparent.
    - Checks in 30-second intervals.
    - Monitors and logs process status and restarts if necessary.
