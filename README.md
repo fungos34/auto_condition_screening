@@ -3,7 +3,7 @@ Python script for automated screening of electrochemical reaction conditions, ut
 
 This script is designed for automated experimental procedures in a laboratory environment. It encompasses various functionalities including liquid handling, syringe pumping, data monitoring, and user interaction. Additionally, there are provisions for starting watchdog processes and a graphical user interface (GUI). The main execution orchestrates the automation process, allowing for remote data retrieval and flexible experimentation. Overall, this script serves as a comprehensive tool for streamlining laboratory workflows and conducting experiments efficiently.
 
-# Get Started
+# Introduction
 Get the source code [here](https://github.com/fungos34/auto_condition_screening).
 
 Clone this repository to your local machine.
@@ -41,7 +41,9 @@ The following Procedure is carried out during the experiments.
 ![Flow Diagram](docs/flow_diagram.png)
 
 ## Experimental Parameters
-Before starting the experimental parameters need to be set to your specific use case.
+The possibility to set all experimental parameters gives you full flexibility to modify the experiments to your specific needs.
+
+Therefore before running the script, the experimental parameters need to be set properly to your specific use case.
 Therefore open the run.py file.
 
 For Running experiments be sure to set and specify the ports properly.
@@ -67,13 +69,63 @@ It is also possible to set other parameters, as long as they are not in conflict
 For detailes see the Module Description below.
 NOTE: all parameters have to be inputted as a list of parameters. the first of them is always specifying the first experiment, and so forth.
 
+## Logging
+
+Logging throughout automated chemical experiments is important for several reasons:
+
+1. **Data Integrity**: Logging allows for the collection of detailed records of experimental parameters, reactions, and outcomes. This ensures the integrity of the experimental data, enabling researchers to analyze results accurately and reproduce experiments if necessary.
+
+2. **Quality Control**: By logging every step of the experiment, researchers can monitor the process in real-time and identify any deviations or anomalies promptly. This facilitates quality control and troubleshooting, ensuring that experiments proceed as planned and reducing the risk of errors or failures.
+
+3. **Documentation and Reproducibility**: Comprehensive logging provides a documented history of the experiment, including procedures, conditions, and observations. This documentation is essential for reproducibility, enabling other researchers to replicate the experiment and verify the results independently.
+
+4. **Analysis and Optimization**: Logged data can be analyzed to identify patterns, trends, and correlations that may not be apparent during the experiment. This analysis can help researchers optimize experimental conditions, refine protocols, and improve the efficiency and effectiveness of future experiments.
+
+5. **Regulatory Compliance**: In regulated environments such as pharmaceutical research or chemical manufacturing, logging is necessary to comply with industry standards and regulations. Detailed logs ensure traceability and accountability, demonstrating adherence to regulatory requirements and facilitating audits or inspections.
+
+Overall, logging throughout automated chemical experiments is essential for maintaining data integrity, ensuring quality control, documenting procedures, enabling reproducibility, facilitating analysis and optimization, and complying with regulatory standards. By capturing detailed records of experimental processes and outcomes, logging enhances the reliability, transparency, and rigor of scientific research in the field of chemistry.
+
+### Logging Sinks
+For reproducibility all the communication between the devices is monitored and stored in a file located at 
+"auto_condition_screening/logs/general.log"
+
+For reliability of the current and voltage values of the power source are monitored throughout the whole process separately in a file at the location 
+"auto_condition_screening/logs/monitoring.log"
+
+Furthermore the watchdog maintains its own file at the location. This monitores process crash during the conduction of the experiments. Please note, that if the process has been restarted all the other loggings will be written to this file too.
+"auto_condition_screening/logs/watchdog.log"
+
 ## Testing Modus with Virtual Devices
+
+Testing with virtual devices offers several advantages in the context of automated chemical experiments:
+
+1. **Cost-Effectiveness**: Virtual devices eliminate the need for physical hardware, saving costs associated with purchasing and maintaining laboratory equipment. This is particularly beneficial for researchers with budget constraints or those exploring experimental setups before investing in actual devices.
+
+2. **Flexibility and Scalability**: Virtual devices provide flexibility to simulate various experimental conditions and scenarios without constraints imposed by physical limitations. Researchers can easily scale up or modify experiments virtually, allowing for rapid prototyping and iteration.
+
+3. **Accessibility**: Virtual devices are accessible from any location with an internet connection, enabling remote experimentation and collaboration. Researchers can conduct experiments, share results, and collaborate with colleagues worldwide without being confined to a specific laboratory.
+
+4. **Risk Reduction**: Testing with virtual devices minimizes the risk of accidents, equipment damage, or exposure to hazardous substances associated with physical experimentation. Researchers can explore experimental setups and parameters safely in a virtual environment before conducting experiments in the laboratory.
+
+5. **Time Efficiency**: Virtual experimentation enables rapid iteration and testing of hypotheses without waiting for physical setup or execution. Researchers can streamline the experimental process, accelerate data collection, and expedite the overall research timeline.
+
+6. **Debugging and Validation**: Virtual devices facilitate debugging and validation of automated processes by providing detailed feedback and error logs. Researchers can identify and address issues more efficiently, ensuring the reliability and robustness of automated systems before deployment in the laboratory.
+
+7. **Training and Education**: Virtual devices serve as valuable educational tools for training students and researchers in experimental techniques and laboratory procedures. They offer a risk-free environment for hands-on learning and skill development in a wide range of scientific disciplines.
+
+Overall, testing with virtual devices offers numerous advantages, including cost-effectiveness, flexibility, accessibility, risk reduction, time efficiency, debugging capabilities, and educational benefits. Integrating virtual experimentation into the research workflow enhances productivity, innovation, and collaboration in the field of automated chemical experiments.
+
+### Running Virtual Devices
+
 For testing and development purposes this script comes with virtual devices. Running these virtual devices mimics the response behaviour of the real devices.
 
 to start them open a new commandline window (on WINDOWS: press "Windows Key" and type "cmd", press "Enter") change directory to your root directory and "auto_condition_screening/tests/". From here run the following command
 ```
 python ./virtual_bkp_device.py      # alternatively run "virtual_gsioc_device.py" or "virtual_syrrisasia_device.py"
 ``` 
+
+![logging info of a virtual BKP](docs/virtual_bkp.png)
+
 You can change the port on which these virtual devices are listening within the respective files.
 
 ## Plotting Data
@@ -115,7 +167,7 @@ The script is concipated for the following setup
 ![Flow Setup Diagram](docs/flow_setup.png)
 
 ## File Structure
-This is where you find the files.
+The overall file structure looks like this.
 ```
 auto_condition_screening/
 |---docs/
@@ -172,32 +224,44 @@ PORT1   = 'COM3'    #port for GX-241 liquid handler - Ubuntu: '/dev/ttyUSB0'
 PORT2   = 'COM4'    #port for BK Precision 1739 - Ubuntu: '/dev/ttyUSB1'
 
 ##### Adapt this URL to the desired OPC-UA endpoint #####
-OPC_UA_SERVER_URL = "opc.tcp://127.0.0.1:36090/freeopcua/server/" # "opc.tcp://rcpeno02341:5000/" # OPC Server on new RCPE laptop # "opc.tcp://18-nf010:5000/" #OPC Server on FTIR Laptop # "opc.tcp://rcpeno00472:5000/" #OPC Server on RCPE Laptop
+OPC_UA_SERVER_URL = "opc.tcp://127.0.0.1:36090/freeopcua/server/" 
 
 # Volumetric relation of substance in pump B to substance in pump A (float)
 DILLUTION_BA = [] 
+
 # Experimental Current in (mA)
 CURRENTS = [5,15,30] 
+
 # Flow rate of pump A (μL/min)
 FLOW_A  = [] 
+
 # Flow rate of pump B in (μL/min)
 FLOW_B  = []
+
 # Molar charge of the redox reaction in (F/mol)
 CHARGE_VALUES = [3,2,2]
+
 # Generates similar concentration values for each experiment, used in calculating the flow rates (float). 
 CONCENTRATIONS = np.full(len(CURRENTS),(0.025)).tolist() 
+
 # Faraday Constant in ((A*s)/mol)
 FARADAY_CONST = constants.physical_constants['Faraday constant'][0] 
+
 # Maximum flow rate of pump A (μL/min)
 MAX_FLOWRATE_A = 2500 
+
 # Maximum flow rate of pump B (μL/min)
 MAX_FLOWRATE_B = 250 
+
 # Operate on constant Flow Rate of pump A (float)
 CONSTANT_A_FLOWRATE = MAX_FLOWRATE_A/3
+
 # Rinsing factor to gain information about the reactors stady state (float)
 STADY_STATE_RINSING_FACTOR = np.full(len(CHARGE_VALUES),(3)).tolist()
+
 # Starting from experiment with this 1-based integer number (int)
 CONDUCTION_FROM_EXP = int(1)
+
 # Skipping the filling of the pumps (True/False)
 SKIP_FILLING = False
 ```
