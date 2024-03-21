@@ -182,6 +182,9 @@ Additionally, a watchdog maintains its own file at the specified location, monit
 
 Testing with virtual devices offers numerous advantages, including cost-effectiveness, flexibility, accessibility, risk reduction, time efficiency, debugging capabilities, and educational benefits. Integrating virtual experimentation into the research workflow enhances productivity, innovation, and collaboration in the field of automated chemical experiments.
 
+You can access an in-depth tutorial that guides you through setting up serial communication and virtual devices by visiting [this link](https://github.com/fungos34/RS232_communication_tutorial).
+
+
 ### Running Virtual Devices
 
 Running virtual devices mimics the response behaviour of real devices within the setup.
