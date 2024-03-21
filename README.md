@@ -4,7 +4,8 @@ Python script for automated screening of electrochemical reaction conditions, ut
 This script is designed for automated experimental procedures in a laboratory environment. It encompasses various functionalities including liquid handling, syringe pumping, data monitoring, and user interaction. Additionally, there are provisions for starting watchdog processes and a graphical user interface (GUI). The main execution orchestrates the automation process, allowing for remote data retrieval and flexible experimentation. Overall, this script serves as a comprehensive tool for streamlining laboratory workflows and conducting experiments efficiently.
 
 # Get Started
-Get the source code [here](https://github.com/fungos34/auto_condition_screening)
+Get the source code [here](https://github.com/fungos34/auto_condition_screening).
+
 Clone this repository to your local machine.
 
 ## Quick Start
@@ -92,18 +93,6 @@ With more complex data results may look like this:
 ![Flow Diagram](docs/stem4dplot_f2.png)
 ![Flow Diagram](docs/stem4dplot_f3.png)
 
-## "python run.py"
-When running the main entry point from the root directory "auto_condition_screening/" like
-```
-python ./run.py
-```
-you get lead through a command line interface (CLI) to specify what you want to automate.
-
-- Position change (y/n)
-
-- Conduct experiments (y/n) from (int)
-
-- Initialisation procedure (y/n)
 
 # Architecture
 About the structure of the script.
@@ -165,7 +154,7 @@ auto_condition_screening/
 ## Module Description
 
 ### run.py
-The main experimental settings have to be set in here.
+To run the script the main experimental settings have to be set in here.
 If some of these parameters are not set by the user, they will get calculated by the system.
 ```
 TESTING_ACTIVE = True
@@ -228,6 +217,9 @@ def start_watchdog() -> None:
 
 #### Graphical User Interface (GUI)
 A simple GUI enables the operator to carry out some basic operations during setting up the flow setup. 
+
+![Graphical User Interface for basic interactions during setup configuration](GUI.png)
+
 ```
 def start_gui() -> None:
     """Runs the GUI for basic commands towards the flow setup devices.
