@@ -35,6 +35,11 @@ Do you want to carry out the initialisation procedure including filling the reac
 answering with "y" will fill the pumps and the system (reactor, tubings, etc.) with the prepared chemicals.
 answering with "n" will skip this step and just start with the  experimental procedures.
 
+## Flow Diagram
+The following Procedure is carried out during the experiments.
+
+![Flow Diagram](docs/flow_diagram.png)
+
 ## Experimental Parameters
 Before starting the experimental parameters need to be set to your specific use case.
 Therefore open the run.py file.
@@ -63,8 +68,13 @@ For detailes see the Module Description below.
 NOTE: all parameters have to be inputted as a list of parameters. the first of them is always specifying the first experiment, and so forth.
 
 ## Testing Modus with Virtual Devices
-For testing purposes
+For testing and development purposes this script comes with virtual devices. Running these virtual devices mimics the response behaviour of the real devices.
 
+to start them open a new commandline window (on WINDOWS: press "Windows Key" and type "cmd", press "Enter") change directory to your root directory and "auto_condition_screening/tests/". From here run the following command
+```
+python ./virtual_bkp_device.py      # alternatively run "virtual_gsioc_device.py" or "virtual_syrrisasia_device.py"
+``` 
+You can change the port on which these virtual devices are listening within the respective files.
 
 ## Plotting Data
 For Data visualisation a helper module has been implemented. 
@@ -97,10 +107,7 @@ With more complex data results may look like this:
 # Architecture
 About the structure of the script.
 
-## Flow Diagram
-The following Procedure is carried out during the experiments.
 
-![Flow Diagram](docs/flow_diagram.png)
 
 ## Flow Chemistry Setup and Network Diagram
 The script is concipated for the following setup
@@ -111,6 +118,8 @@ The script is concipated for the following setup
 This is where you find the files.
 ```
 auto_condition_screening/
+|---docs/
+|   |--- (... images ...) 
 |
 |---helper/
 |   |---analyzing_logg_file.py
