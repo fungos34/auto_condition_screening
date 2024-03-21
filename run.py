@@ -41,13 +41,13 @@ OPC_UA_SERVER_URL = "opc.tcp://127.0.0.1:36090/freeopcua/server/" # "opc.tcp://r
 # Volumetric relation of substance in pump B to substance in pump A (float)
 DILLUTION_BA = [] 
 # Experimental Current in (mA)
-CURRENTS = [5,15,30]#[2.5,2.5,2.5,2.7,2.7,2.7,2.9,2.9,2.9,3.1,3.1,3.1,3.3,3.3,3.3,3.5,3.5,3.5,3.7,3.7,3.7,3.9,3.9,3.9,4.2,4.2,4.2,4.5,4.5,4.5,4.8,4.8,4.8,5.2,5.2,5.2,5.6,5.6,5.6,6,6,6] 
+CURRENTS = [2.5,2.5,2.5,2.7,2.7,2.7,2.9,2.9,2.9,3.1,3.1,3.1,3.3,3.3,3.3,3.5,3.5,3.5,3.7,3.7,3.7,3.9,3.9,3.9,4.2,4.2,4.2,4.5,4.5,4.5,4.8,4.8,4.8,5.2,5.2,5.2,5.6,5.6,5.6,6,6,6] 
 # Flow rate of pump A (μL/min)
 FLOW_A  = [] 
 # Flow rate of pump B in (μL/min)
 FLOW_B  = []
 # Molar charge of the redox reaction in (F/mol)
-CHARGE_VALUES = [3,2,2]#[2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3] 
+CHARGE_VALUES = [2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3,2.5,2.8,3] 
 # Generates similar concentration values for each experiment, used in calculating the flow rates (float). 
 CONCENTRATIONS = np.full(len(CURRENTS),(0.025)).tolist() 
 # Faraday Constant in ((A*s)/mol)

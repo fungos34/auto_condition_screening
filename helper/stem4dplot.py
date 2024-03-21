@@ -639,11 +639,11 @@ def longrun_plot_first(electrode_surface_area):
 
 
 def main():
-    # ELECTRODE_SURFACE_AREA = 56/100 # cm²
+    ELECTRODE_SURFACE_AREA = 56/100 # cm²
 
-    # longrun_plot_first(ELECTRODE_SURFACE_AREA)
-    # longrun_plot_second(ELECTRODE_SURFACE_AREA)
-    # longrun_plot_third(ELECTRODE_SURFACE_AREA)
+    longrun_plot_first(ELECTRODE_SURFACE_AREA)
+    longrun_plot_second(ELECTRODE_SURFACE_AREA)
+    longrun_plot_third(ELECTRODE_SURFACE_AREA)
 
     # plot_no0()
     # plot_no1()
@@ -651,7 +651,7 @@ def main():
     # plot_no3()
     # plot_no4()
 
-    Stem4DPlot([1,2,3,4,5,6,7,8,9,'X-Axis'],[1,2,3,4,5,6,7,8,9,'Y-Axis'],[1,2,3,4,5,6,7,8,9,'Z-Axis'],[1,2,4,8,9,8,4,2,1,'Color-Axis'],color_code='none',reverse_colors=False,lower_colorscale_border=None,upper_colorscale_border=None)
+    # Stem4DPlot([1,2,3,4,5,6,7,8,9,'X-Axis'],[1,2,3,4,5,6,7,8,9,'Y-Axis'],[1,2,3,4,5,6,7,8,9,'Z-Axis'],[1,2,4,8,9,8,4,2,1,'Color-Axis'],color_code='none',reverse_colors=False,lower_colorscale_border=None,upper_colorscale_border=None)
 
 
 if __name__ == '__main__':

@@ -1,11 +1,74 @@
 # auto_condition_screening
 Python script for automated screening of electrochemical reaction conditions, utilizing Gilson Equipment, Syrris Asia pumps, and a BKPrecission Power Source. The communication is runing over OPC-UA, RS-232 and GSIOC.
 
+This script is designed for automated experimental procedures in a laboratory environment. It encompasses various functionalities including liquid handling, syringe pumping, data monitoring, and user interaction. Additionally, there are provisions for starting watchdog processes and a graphical user interface (GUI). The main execution orchestrates the automation process, allowing for remote data retrieval and flexible experimentation. Overall, this script serves as a comprehensive tool for streamlining laboratory workflows and conducting experiments efficiently.
+
 # Get Started
-Installation of modules
+
+## Quick Start
+from the root directory "auto_condition_screening/" run the following commands
+```
+pip install -r requirements.txt
+python ./run.py
+```
+The system will prompt you 
+```
+starting position change? (y/n):
+```
+answering with "y" will start up the GUI for direct device interacitons.
+answering with "n" will lead to another prompt
+```
+starting experiments (further settings are queried afterwards)? (y/n):
+```
+answering with "n" exits the script.
+answering with "y" leads to the next prompt
+```
+from which experiment number do you want to start? (integer number)
+```
+provide an integer number to select the experiment to start with. The first experiment is number 1 (not 0). The last prompt will appear.
+```
+Do you want to carry out the initialisation procedure including filling the reactor? (y/n)
+```
+answering with "y" will fill the pumps and the system (reactor, tubings, etc.) with the prepared chemicals.
+answering with "n" will skip this step and just start with the  experimental procedures.
 
 ## Experimental Parameters
-What parameters can be set?
+Before starting the experimental parameters need to be set to your specific use case.
+Therefore open the run.py file.
+
+For Running experiments be sure to set and specify the ports properly.
+```
+TESTING_ACTIVE = False
+```
+Also be sure to set the proper endpoints for your ports and the OPC-UA Server
+```
+PORT1   = 'COM3'    #port for GX-241 liquid handler
+PORT2   = 'COM4'    #port for BK Precision 1739
+OPC_UA_SERVER_URL = "opc.tcp://127.0.0.1:36090/freeopcua/server/" 
+```
+(NOTE: The OPC_UA_SERVER_URL parameter has to be set for the GUI separately. Open therefore the "basic_gui.py" file and set this parameter there as well.)
+
+The residual parameters can be set as demanded for the experiments.
+One example to conduct three experiments in a row:
+```
+CURRENTS = [2.5, 2.7, 3.7]
+CHARGE_VALUES = [2.5, 2.8, 2.5]
+```
+the residual parameters will be calculated automatically.
+It is also possible to set other parameters, as long as they are not in conflict with each other.
+For detailes see the Module Description below.
+NOTE: all parameters have to be inputted as a list of parameters. the first of them is always specifying the first experiment, and so forth.
+
+## Testing Modus with Virtual Devices
+For testing purposes
+
+
+## Plotting Data
+
+![Flow Diagram](docs/stem4dplot_1.png)
+![Flow Diagram](docs/stem4dplot_f1.png)
+![Flow Diagram](docs/stem4dplot_f2.png)
+![Flow Diagram](docs/stem4dplot_f3.png)
 
 ## "python run.py"
 When running the main entry point from the root directory "auto_condition_screening/" like
@@ -26,12 +89,12 @@ About the structure of the script.
 ## Flow Diagram
 The following Procedure is carried out during the experiments.
 
-![Flow Diagram](flow_diagram.png)
+![Flow Diagram](docs/flow_diagram.png)
 
 ## Flow Chemistry Setup and Network Diagram
 The script is concipated for the following setup
 
-![Flow Setup Diagram](flow_setup.png)
+![Flow Setup Diagram](docs/flow_setup.png)
 
 ## File Structure
 This is where you find the files.
@@ -80,8 +143,6 @@ auto_condition_screening/
 ## Module Description
 
 ### run.py
-A script designed for automating experimental procedures in a laboratory environment. It encompasses various functionalities including liquid handling, syringe pumping, data monitoring, and user interaction. It also includes functions for setting up the automation, running experiments, collecting reactions, and filling the system. Additionally, there are provisions for starting watchdog processes and a graphical user interface (GUI). The main execution orchestrates the automation process, allowing for remote data retrieval and flexible experimentation. Overall, this script serves as a comprehensive tool for streamlining laboratory workflows and conducting experiments efficiently.
-
 The main experimental settings have to be set in here.
 If some of these parameters are not set by the user, they will get calculated by the system.
 ```

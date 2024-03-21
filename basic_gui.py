@@ -30,13 +30,13 @@ def main():
     button1 = ctk.CTkButton(master=root_ctk, text='Activate both Pumps', command=activate_both_pumps)
     button2 = ctk.CTkButton(master=root_ctk, text='Switch Valve to LOAD', command=switch_to_load)
     button3 = ctk.CTkButton(master=root_ctk, text='Switch Valve to INJECT', command=switch_to_inject) 
-    button4 = ctk.CTkButton(master=root_ctk, text='Set Pump A to max Flow Rate', command=set_pump_a_to_max_flow_rate)
-    button5 = ctk.CTkButton(master=root_ctk, text='Set Pump B to max Flow Rate', command=set_pump_b_to_max_flow_rate)
+    button4 = ctk.CTkButton(master=root_ctk, text='Set Pump A to max Flow Rate, stop pump B', command=set_pump_a_to_max_flow_rate)
+    button5 = ctk.CTkButton(master=root_ctk, text='Set Pump B to max Flow Rate, stop pump A', command=set_pump_b_to_max_flow_rate)
     button6 = ctk.CTkButton(master=root_ctk, text='Stop Pump A', command=stop_pump_a)
     button7 = ctk.CTkButton(master=root_ctk, text='Stop Pump B', command=stop_pump_b)
     
     
-    label = ctk.CTkLabel(master=root_ctk, text="This Graphical User Interface enables to control the \nSyrris Asia Pumps, \nGSIOC Liquid Handler, \nGSIOC Direct Injection Module and \nBKP Power Supply (future implementation) \nin a half automated manner.\nPress the Buttons to carry out the operations.\n('Set Pumps Flow Rate' is without function so far)", width=120, height=25)
+    label = ctk.CTkLabel(master=root_ctk, text="This Graphical User Interface enables to control the \nSyrris Asia Pumps, \nGSIOC Liquid Handler, \nGSIOC Direct Injection Module and \nBKP Power Supply (future implementation) \nin a half automated manner.\nPress the Buttons to carry out the operations.", width=120, height=25)
     entry = ctk.CTkEntry(master=root_ctk, width=120, height=25)
     entry.place(relx=0.1, rely=1, anchor=ctk.NW)
     text = entry.get()
