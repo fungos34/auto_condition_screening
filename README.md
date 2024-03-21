@@ -45,7 +45,6 @@ The experimental procedure consists of several procedural steps, some of which r
 Before running the script, ensure that all experimental parameters are properly set to your specific use case. Open the `run.py` file to set the experimental parameters. Be sure to specify the ports properly and set the endpoints for your ports and the OPC-UA Server.
 
 ```
-python
 TESTING_ACTIVE = False
 
 PORT1   = 'COM3'    # Port for GX-241 liquid handler
@@ -59,10 +58,10 @@ The residual parameters can be set as demanded for the experiments. For example,
 CURRENTS = [2.5, 2.7, 3.7]
 CHARGE_VALUES = [2.5, 2.8, 2.5]
 ```
-Ensure all parameters are inputted as lists of parameters, with the first specifying the parameters for the first experiment, and so forth. It is also possible to set other parameters as long as they are not in conflict with each other. For detailed information, refer to the global variable description below.
+Ensure all parameters are inputted as lists of parameters, with the first specifying the parameters for the first experiment, and so forth. It is also possible to set other parameters as long as they are not in conflict with each other. For detailed information, refer to the global variables description below.
 
 
-### Global Variable Description
+### Global Variables Description
 To run the script, the main experimental settings have to be set in here.
 If some of these parameters are not set by the user, they will get calculated by the system.
 
@@ -168,141 +167,20 @@ def start_gui() -> None:
 ```
 
 
-
-## Module Description
-
-### Basic GUI
-The `basic_gui.py` script provides a graphical user interface for direct device interactions. It allows users to control various equipment, initiate experiments, and monitor progress.
-
-### Commands
-The `commands.py` file contains functions for configuring and controlling various equipment used in automated experimental procedures. It provides capabilities for setting pump flow rates, activating/deactivating pumps, configuring the BKPrecission Power Source, and controlling the Direct Injection Module.
-
-### Documentation
-The `documentation.py` file contains functions for generating unique IDs, writing experimental parameters to Excel files for documentation, and retrieving predictions for experiment durations. It facilitates comprehensive documentation and analysis of experimental results.
-
-### Duration Calculator
-The `duration_calculator.py` script contains functions for calculating the time required for each experimental cycle in a specific setup. It predicts the duration of experimental cycles based on setup-specific parameters such as tubing volumes, pump characteristics, and collected fraction size.
-
-### Flow Setup
-The `flow_setup.py` file contains classes and functions related to the representation and manipulation of components within the flow setup for experiments. It handles aspects such as racks, vials, and volumes used in the setup.
-
-### Formatters
-The `formatters.py` file provides functions for formatting input lists of numbers (floats or integers) and returning formatted lists with string entries. It ensures that input data used in the flow setup are properly formatted for further processing.
-
-### GSIOC
-The `gsioc.py` file contains a class and utility functions for handling communication with GSIOC devices. It provides a flexible interface for interacting with GSIOC devices, including error handling and position checking functionalities.
-
-### Immortality Decorator
-The `immortality_decorator.py` script contains decorators and utility functions for handling errors and exceptions in Python functions. It enhances error handling and testing capabilities by allowing functions to be retried a specified number of times in case of failure.
-
-### Monitor BKP
-The `monitor_BKP.py` script uses PySerial to monitor a B+K Precision 1739 device via RS232 communication. It periodically sends commands to the device and logs the responses, along with any errors, to a log file.
-
-### Protocol Power Supply
-The `protocol_power_supply.py` script provides protocol methods to communicate with a B+K PRECISION 1739 Revision 1.3 device via RS-232 serial communication. It facilitates sending commands to the device, receiving responses, and error handling functionalities.
-
-### Run Identifier
-The `run_identifier.py` script manages a run identifier stored in a non-volatile memory file. It allows for resetting the run identifier, incrementing it by one, and retrieving the current run number, ensuring the persistence of the run identifier across script executions.
-
-### Run Syringe Pump
-The `run_syrringe_pump.py` script facilitates communication with a Syrris pump via OPC-UA protocol. It allows activation, deactivation, setting flow rates, and reading pressure values from the pump, providing comprehensive control over pump operations.
-
-### Sound
-The `sound.py` script provides functions to generate specific sounds using PyAudio and NumPy libraries, enhancing user feedback during script execution.
-
-### Warden
-The `warden.py` script serves as a watchdog process that monitors the status of another process and restarts it if necessary. It provides functions to retrieve process information and ensures the reliability of the automated experimental setup.
-
-
-<!-- 
-# Introduction
-Get the source code [here](https://github.com/fungos34/auto_condition_screening).
-
-Clone this repository to your local machine.
-
-## Quick Start
-from the root directory "auto_condition_screening/" run the following commands
-```
-pip install -r requirements.txt
-python ./run.py
-```
-The system will prompt you 
-```
-starting position change? (y/n):
-```
-answering with "y" will start up the GUI for direct device interacitons.
-answering with "n" will lead to another prompt
-```
-starting experiments (further settings are queried afterwards)? (y/n):
-```
-answering with "n" exits the script.
-answering with "y" leads to the next prompt
-```
-from which experiment number do you want to start? (integer number)
-```
-provide an integer number to select the experiment to start with. The first experiment is number 1 (not 0). The last prompt will appear.
-```
-Do you want to carry out the initialisation procedure including filling the reactor? (y/n)
-```
-answering with "y" will fill the pumps and the system (reactor, tubings, etc.) with the prepared chemicals.
-answering with "n" will skip this step and just start with the  experimental procedures.
-
-## Flow Diagram
-The experimental procedure consists of several procedural steps, some of which repeat themselves with different set parameters to vary the conditions between experiments. Consequently, this script can be utilized to establish a broad spectrum of experimental parameters, including current, cut-off voltage, flow rate for each pump, rinsing procedures, and collection vials. The following procedure is carried out by default during a typical run.
-
-![Flow Diagram](docs/flow_diagram.png)
-
-## Experimental Parameters
-The possibility to set all experimental parameters gives you full flexibility to modify the experiments to your specific needs.
-
-Therefore before running the script, the experimental parameters need to be set properly to your specific use case.
-Therefore open the run.py file.
-
-For Running experiments be sure to set and specify the ports properly.
-```
-TESTING_ACTIVE = False
-```
-Also be sure to set the proper endpoints for your ports and the OPC-UA Server
-```
-PORT1   = 'COM3'    #port for GX-241 liquid handler
-PORT2   = 'COM4'    #port for BK Precision 1739
-OPC_UA_SERVER_URL = "opc.tcp://127.0.0.1:36090/freeopcua/server/" 
-```
-(NOTE: The OPC_UA_SERVER_URL parameter has to be set for the GUI separately. Open therefore the "basic_gui.py" file and set this parameter there as well.)
-
-The residual parameters can be set as demanded for the experiments.
-One example to conduct three experiments in a row:
-```
-CURRENTS = [2.5, 2.7, 3.7]
-CHARGE_VALUES = [2.5, 2.8, 2.5]
-```
-the residual parameters will be calculated automatically.
-It is also possible to set other parameters, as long as they are not in conflict with each other.
-For detailes see the Module Description below.
-NOTE: all parameters have to be inputted as a list of parameters. the first of them is always specifying the first experiment, and so forth. -->
-
 ## Logging
-
-Logging throughout automated chemical experiments is important for several reasons. Logging allows for the collection of detailed records of experimental parameters, reactions, and outcomes. This ensures the integrity of the experimental data, enabling researchers to analyze results accurately and reproduce experiments if necessary. By logging every step of the experiment, researchers can monitor the process in real-time and identify any deviations or anomalies promptly. This facilitates quality control and troubleshooting, ensuring that experiments proceed as planned and reducing the risk of errors or failures. Comprehensive logging provides a documented history of the experiment, including procedures, conditions, and observations. This documentation is essential for reproducibility, enabling other researchers to replicate the experiment and verify the results independently. Logged data can be analyzed to identify patterns, trends, and correlations that may not be apparent during the experiment. This analysis can help researchers optimize experimental conditions, refine protocols, and improve the efficiency and effectiveness of future experiments. In regulated environments such as pharmaceutical research or chemical manufacturing, logging is necessary to comply with industry standards and regulations. Detailed logs ensure traceability and accountability, demonstrating adherence to regulatory requirements and facilitating audits or inspections. 
-
-In summary, logging throughout automated chemical experiments is essential for maintaining data integrity, ensuring quality control, documenting procedures, enabling reproducibility, facilitating analysis and optimization, and complying with regulatory standards. By capturing detailed records of experimental processes and outcomes, logging enhances the reliability, transparency, and rigor of scientific research in the field of chemistry.
+Loogging throughout automated chemical experiments is essential for maintaining data integrity, ensuring quality control, documenting procedures, enabling reproducibility, facilitating analysis and optimization, and complying with regulatory standards. By capturing detailed records of experimental processes and outcomes, logging enhances the reliability, transparency, and rigor of scientific research in the field of chemistry.
 
 ### Logging Sinks
-For reproducibility all the communication between the devices is monitored and stored in a file located at 
-"auto_condition_screening/logs/general.log"
 
-For reliability of the current and voltage values of the power source are monitored throughout the whole process separately in a file at the location 
-"auto_condition_screening/logs/monitoring.log"
+To ensure reproducibility, all communication between devices and procedure details are monitored and stored in a file located at `"auto_condition_screening/logs/general.log"`.
 
-Furthermore the watchdog maintains its own file at the location. This monitores process crash during the conduction of the experiments. Please note, that if the process has been restarted all the other loggings will be written to this file too.
-"auto_condition_screening/logs/watchdog.log"
+For the reliability of current and voltage values from the power source, monitoring occurs throughout the entire process, recorded separately in a file at `"auto_condition_screening/logs/monitoring.log"`.
+
+Additionally, a watchdog maintains its own file at the specified location, monitoring process crashes during experiments. It's important to note that if the process is restarted, all other logs will also be written to this file: `"auto_condition_screening/logs/watchdog.log"`.
 
 ## Testing Mode utilizing Virtual Devices
 
-Testing with virtual devices offers several advantages in the context of automated chemical experiments.
-Virtual devices eliminate the need for physical hardware, saving costs associated with purchasing and maintaining laboratory equipment. This is particularly beneficial for researchers with budget constraints or those exploring experimental setups before investing in actual devices. Virtual devices provide flexibility to simulate various experimental conditions and scenarios without constraints imposed by physical limitations. Researchers can easily scale up or modify experiments virtually, allowing for rapid prototyping and iteration. Virtual devices are accessible from any location with an internet connection, enabling remote experimentation and collaboration. Researchers can conduct experiments, share results, and collaborate with colleagues worldwide without being confined to a specific laboratory. Testing with virtual devices minimizes the risk of accidents, equipment damage, or exposure to hazardous substances associated with physical experimentation. Researchers can explore experimental setups and parameters safely in a virtual environment before conducting experiments in the laboratory. Virtual experimentation enables rapid iteration and testing of hypotheses without waiting for physical setup or execution. Researchers can streamline the experimental process, accelerate data collection, and expedite the overall research timeline. Virtual devices facilitate debugging and validation of automated processes by providing detailed feedback and error logs. Researchers can identify and address issues more efficiently, ensuring the reliability and robustness of automated systems before deployment in the laboratory. Virtual devices serve as valuable educational tools for training students and researchers in experimental techniques and laboratory procedures. They offer a risk-free environment for hands-on learning and skill development in a wide range of scientific disciplines.
-
-Overall, testing with virtual devices offers numerous advantages, including cost-effectiveness, flexibility, accessibility, risk reduction, time efficiency, debugging capabilities, and educational benefits. Integrating virtual experimentation into the research workflow enhances productivity, innovation, and collaboration in the field of automated chemical experiments.
+Testing with virtual devices offers numerous advantages, including cost-effectiveness, flexibility, accessibility, risk reduction, time efficiency, debugging capabilities, and educational benefits. Integrating virtual experimentation into the research workflow enhances productivity, innovation, and collaboration in the field of automated chemical experiments.
 
 ### Running Virtual Devices
 
@@ -353,8 +231,10 @@ With more complex data results may look like this:
 ![Flow Diagram](docs/stem4dplot_f2.png)
 ![Flow Diagram](docs/stem4dplot_f3.png)
 
+
 # Software Architecture
 This overview over the software architecture enhances transparency, collaboration, and the ability to effectively manage and evolve complex software systems.
+
 
 ## Flow Chemistry Setup and Network Diagram
 This script is concipated for the following flow setup to utilize full automated electroorganic synthesis.
@@ -409,8 +289,49 @@ auto_condition_screening/
 
 ## Module Description
 
+### Basic GUI
+The `basic_gui.py` script provides a graphical user interface for direct device interactions. It allows users to control various equipment, initiate experiments, and monitor progress.
 
-## File Documentation
+### Commands
+The `commands.py` file contains functions for configuring and controlling various equipment used in automated experimental procedures. It provides capabilities for setting pump flow rates, activating/deactivating pumps, configuring the BKPrecission Power Source, and controlling the Direct Injection Module.
+
+### Documentation
+The `documentation.py` file contains functions for generating unique IDs, writing experimental parameters to Excel files for documentation, and retrieving predictions for experiment durations. It facilitates comprehensive documentation and analysis of experimental results.
+
+### Duration Calculator
+The `duration_calculator.py` script contains functions for calculating the time required for each experimental cycle in a specific setup. It predicts the duration of experimental cycles based on setup-specific parameters such as tubing volumes, pump characteristics, and collected fraction size.
+
+### Flow Setup
+The `flow_setup.py` file contains classes and functions related to the representation and manipulation of components within the flow setup for experiments. It handles aspects such as racks, vials, and volumes used in the setup.
+
+### Formatters
+The `formatters.py` file provides functions for formatting input lists of numbers (floats or integers) and returning formatted lists with string entries. It ensures that input data used in the flow setup are properly formatted for further processing.
+
+### GSIOC
+The `gsioc.py` file contains a class and utility functions for handling communication with GSIOC devices. It provides a flexible interface for interacting with GSIOC devices, including error handling and position checking functionalities.
+
+### Immortality Decorator
+The `immortality_decorator.py` script contains decorators and utility functions for handling errors and exceptions in Python functions. It enhances error handling and testing capabilities by allowing functions to be retried a specified number of times in case of failure.
+
+### Monitor BKP
+The `monitor_BKP.py` script uses PySerial to monitor a B+K Precision 1739 device via RS232 communication. It periodically sends commands to the device and logs the responses, along with any errors, to a log file.
+
+### Protocol Power Supply
+The `protocol_power_supply.py` script provides protocol methods to communicate with a B+K PRECISION 1739 Revision 1.3 device via RS-232 serial communication. It facilitates sending commands to the device, receiving responses, and error handling functionalities.
+
+### Run Identifier
+The `run_identifier.py` script manages a run identifier stored in a non-volatile memory file. It allows for resetting the run identifier, incrementing it by one, and retrieving the current run number, ensuring the persistence of the run identifier across script executions.
+
+### Run Syringe Pump
+The `run_syrringe_pump.py` script facilitates communication with a Syrris pump via OPC-UA protocol. It allows activation, deactivation, setting flow rates, and reading pressure values from the pump, providing comprehensive control over pump operations.
+
+### Sound
+The `sound.py` script provides functions to generate specific sounds using PyAudio and NumPy libraries, enhancing user feedback during script execution.
+
+### Warden
+The `warden.py` script serves as a watchdog process that monitors the status of another process and restarts it if necessary. It provides functions to retrieve process information and ensures the reliability of the automated experimental setup.
+
+## Code Documentation
 
 ### basic_gui.py
 The file "basic_gui.py" is a Python script designed for controlling and monitoring automated experimental procedures in a laboratory environment. It utilizes various equipment including Syrris Asia Pumps, GSIOC Liquid Handler, GSIOC Direct Injection Module, and a BKP Power Supply (for future implementation) in a semi-automated manner. The graphical user interface (GUI) provides buttons for executing different operations such as activating and deactivating pumps, switching valves, setting pump flow rates, and stopping pump operation. Additionally, it includes functionality for tasks like going to specific vials and monitoring the BKP power supply. The script integrates sound alerts for user feedback during operations. The main function orchestrates the GUI and associated actions, ensuring smooth interaction and control over the experimental setup.
