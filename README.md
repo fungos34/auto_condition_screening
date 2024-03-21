@@ -4,6 +4,8 @@ Python script for automated screening of electrochemical reaction conditions, ut
 This script is designed for automated experimental procedures in a laboratory environment. It encompasses various functionalities including liquid handling, syringe pumping, data monitoring, and user interaction. Additionally, there are provisions for starting watchdog processes and a graphical user interface (GUI). The main execution orchestrates the automation process, allowing for remote data retrieval and flexible experimentation. Overall, this script serves as a comprehensive tool for streamlining laboratory workflows and conducting experiments efficiently.
 
 # Get Started
+Get the source code [here](https://github.com/fungos34/auto_condition_screening)
+Clone this repository to your local machine.
 
 ## Quick Start
 from the root directory "auto_condition_screening/" run the following commands
@@ -64,8 +66,28 @@ For testing purposes
 
 
 ## Plotting Data
+For Data visualisation a helper module has been implemented. 
+To use it, change to the directory "auto_condition_screening/helper/".
+In the file "stem4dplot.py" you can use the class Stem4DPlot() to plot your data.
 
+practical example:
+```
+Stem4DPlot(
+    [1,2,3,4,5,6,7,8,9,'X-Axis'],
+    [1,2,3,4,5,6,7,8,9,'Y-Axis'],
+    [1,2,3,4,5,6,7,8,9,'Z-Axis'],
+    [1,2,4,8,9,8,4,2,1,'Color-Axis'],
+    color_code='none',
+    reverse_colors=False,
+    lower_colorscale_border=None,
+    upper_colorscale_border=None
+    )
+
+```
+running this file now yields the following plot:
 ![Flow Diagram](docs/stem4dplot_1.png)
+
+With more complex data results may look like this:
 ![Flow Diagram](docs/stem4dplot_f1.png)
 ![Flow Diagram](docs/stem4dplot_f2.png)
 ![Flow Diagram](docs/stem4dplot_f3.png)
