@@ -3,11 +3,10 @@ import numpy as np
 import time
 
 def get_noice(duration,frequency):
+    """Creates a noice."""
     # Set the sample rate and duration of the sound
     sample_rate = 44100
-    #duration = 1
     # Generate a sine wave with frequency 440 Hz
-    #frequency = 400.0
     samples = np.sin(2 * np.pi * np.arange(sample_rate * duration) * frequency / sample_rate)
     # Create an instance of the PyAudio class
     p = pyaudio.PyAudio()
@@ -19,21 +18,23 @@ def get_noice(duration,frequency):
     stream.stop_stream()
     stream.close()
     p.terminate()
-    # time.sleep(0.15)
 
 def get_sound1():
+    """Forms a specific sound1"""
     durations=[0.1,0.1,0.1]#[0.051,0.051,0.051,0.051,0.8]
     frequencies=[432,741,432]#[400,444,488,500,550]
     for i in range(len(durations)):
         get_noice(durations[i],frequencies[i])
 
 def get_sound2():
+    """Forms a specific sound2"""
     durations=[0.1,0.1,0.1]#[0.051,0.051,0.051,0.051,0.8]
     frequencies=[741,432,741]#[400,444,488,500,550]
     for i in range(len(durations)):
         get_noice(durations[i],frequencies[i])
 
 def get_sound3():
+    """Forms a specific sound3"""
     get_noice(0.5,900)
 
 if __name__=='__main__':

@@ -2,17 +2,10 @@ import psutil
 import re
 import os
 import time
-from immortility_decorator import error_handler
 from run import automation_main
 
 from loguru import logger
 logger.add('logs/watchdog.log', level='INFO')
-
-"""
-Niklas nikl.sulz3@gmail.com
-Eduardo eduardo.rial@rcpe.at
-Christine schiller@student.tugraz.at
-"""
 
 def get_process_by_name_or_id(name: str = None, id: int = None):
     """finds processes by either name or ID."""
@@ -31,9 +24,9 @@ def get_process_by_name_or_id(name: str = None, id: int = None):
         raise Exception('Please enter only id or name, not both.')
     return ls
 
-# print(os.getpid())
 
 def get_automation_process_state() -> str:
+    """Retrieves current status of the automation process."""
     with open('logs/procedural_data.txt','r') as file:
         lines = file.readlines()
         process_id = str(lines[0]).strip()
@@ -44,6 +37,7 @@ def get_automation_process_state() -> str:
 
 # @error_handler(3)
 def restarter():
+    """Restarts the watched process when not apparent anymore. Checks in 30 sec intervals."""
     p = psutil.Process(os.getpid())
     p.nice(psutil.HIGH_PRIORITY_CLASS)
     logger.info(f'Process priority of warden process was set to {p.nice()}.')
