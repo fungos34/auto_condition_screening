@@ -230,10 +230,7 @@ running this file now yields the following plot:
 
 With more complex data results may look like this:
 
-![Flow Diagram](docs/stem4dplot_f1.png)
-![Flow Diagram](docs/stem4dplot_f2.png)
-![Flow Diagram](docs/stem4dplot_f3.png)
-
+![Flow Diagram](sin_wave_rot_short_2.gif)
 
 # Software Architecture
 This overview over the software architecture enhances transparency, collaboration, and the ability to effectively manage and evolve complex software systems.
