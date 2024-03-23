@@ -226,6 +226,7 @@ Stem4DPlot(
 
 ```
 running this file now yields the following plot:
+
 ![Flow Diagram](docs/stem4dplot_1.png)
 
 With more complex data results may look like this:
